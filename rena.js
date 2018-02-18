@@ -88,6 +88,13 @@
 			count = 0,
 			beforeLength,
 			i;
+		function executeAction(attr, action, match) {
+			if(action) {
+				return nvf(attr, action(match.match, match.attribute, attr));
+			} else {
+				return nvf(attr, match.attribute);
+			}
+		}
 		captures = captures || {};
 		outer: while(pc < rena._patterns.length) {
 			inst = rena._patterns[pc];
@@ -102,7 +109,7 @@
 					if(inst.captureName) {
 						if(count === 0) {
 							for(i = 0; i < captures[inst.captureName].length; i++) {
-								attr = nvf(attr, actions[inst.captureName](captures[inst.captureName][i].match));
+								attr = executeAction(attr, actions[inst.captureName], match);
 							}
 						}
 					}
@@ -139,11 +146,7 @@
 			} else if(inst instanceof Then) {
 				if(!!(match = inst.pattern(str, index, attr))) {
 					index = match.lastIndex;
-					if(inst.action) {
-						attr = nvf(attr, inst.action(match.match, match.attribute, attr));
-					} else {
-						attr = nvf(attr, match.attribute);
-					}
+					attr = executeAction(attr, inst.action, match);
 				} else {
 					return null;
 				}
