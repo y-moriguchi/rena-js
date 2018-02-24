@@ -93,6 +93,8 @@
 	function Action(action) {
 		this.action = action;
 	}
+	function Ignore() {
+	}
 	function testRe(str, startIndex, rena, startpc, captures, attribute, countRepetation) {
 		var pc = startpc,
 			index = startIndex,
@@ -120,6 +122,12 @@
 			}
 			return attr;
 		}
+		function ignorePattern() {
+			var match;
+			if(rena._ignore && !!(match = rena._ignore(str, index, attr))) {
+				index = match.lastIndex;
+			}
+		}
 		captures = captures || {};
 		outer: while(pc < rena._patterns.length) {
 			inst = rena._patterns[pc];
@@ -130,6 +138,7 @@
 					if(inst.actionId) {
 						captures[inst.actionId].push(match);
 					}
+					ignorePattern();
 				} else {
 					return null;
 				}
@@ -167,6 +176,7 @@
 						}
 						index = match.lastIndex;
 						attr = passAction ? void 0 : nvf(attr, match.attribute);
+						ignorePattern();
 						pc++;
 						continue outer;
 					}
@@ -196,6 +206,9 @@
 			} else if(inst instanceof PassAll) {
 				passAction = true;
 				pc++;
+			} else if(inst instanceof Ignore) {
+				ignorePattern();
+				pc++;
 			}
 		}
 		return {
@@ -218,13 +231,13 @@
 		}
 		this._patterns = [];
 		this._ignore = Rena._ignore;
+		if(this._ignore) {
+			this._patterns.push(new Ignore());
+		}
 	}
 	Rena.prototype = {
 		then: function(pattern, action) {
 			this._patterns.push(new Then(pattern, action));
-			if(this._ignore) {
-				this._patterns.push(new Then(this._ignore, Rena.pass));
-			}
 			return this;
 		},
 		thenPass: function(pattern) {
@@ -237,9 +250,6 @@
 				alts[i] = wrap(arguments[i]);
 			}
 			this._patterns.push(new Alt(null, alts));
-			if(this._ignore) {
-				this._patterns.push(new Then(this._ignore, Rena.pass));
-			}
 			return this;
 		},
 		anyChars: function() {
@@ -292,9 +302,6 @@
 				addr;
 			this._patterns.push(action);
 			this._patterns.push(new Then(pattern, null, action.action));
-			if(this._ignore) {
-				this._patterns.push(new Then(this._ignore, Rena.pass));
-			}
 			addr = this._patterns.length;
 			this._patterns.push(repeat);
 			this.then(wrap(delimiter));
