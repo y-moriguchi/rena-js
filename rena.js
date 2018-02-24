@@ -87,12 +87,11 @@
 	}
 	function PassAll() {
 	}
-	function Rena(attribute) {
-		if(!(this instanceof Rena)) {
-			return new Rena();
-		}
-		this._patterns = [];
-		this._attribute = attribute;
+	function Attr(attr) {
+		this.attr = attr;
+	}
+	function Action(action) {
+		this.action = action;
 	}
 	function testRe(str, startIndex, rena, startpc, captures, attribute, countRepetation) {
 		var pc = startpc,
@@ -188,6 +187,12 @@
 					return null;
 				}
 				pc++;
+			} else if(inst instanceof Attr) {
+				attr = inst.attr;
+				pc++;
+			} else if(inst instanceof Action) {
+				attr = nvf(attr, inst.action(attr));
+				pc++;
 			} else if(inst instanceof PassAll) {
 				passAction = true;
 				pc++;
@@ -198,6 +203,20 @@
 			lastIndex: index,
 			attribute: attr
 		};
+	}
+	function Rena(arg1) {
+		var res;
+		if(!(this instanceof Rena)) {
+			if(arg1 instanceof Rena) {
+				return arg1;
+			}
+			res = new Rena();
+			if(arg1 !== void 0) {
+				res.then(arg1);
+			}
+			return res;
+		}
+		this._patterns = [];
 	}
 	Rena.prototype = {
 		then: function(pattern, action) {
@@ -253,6 +272,9 @@
 		zeroOrMore: function(pattern, action, init) {
 			return this.atLeast(0, pattern, action, init);
 		},
+		oneOrMore: function(pattern, action, init) {
+			return this.atLeast(1, pattern, action, init);
+		},
 		delimit: function(pattern, delimiter, action, init) {
 			var action = new NewAction(action);
 			this._patterns.push(action);
@@ -279,14 +301,44 @@
 			this._patterns.push(new PassAll());
 			return this;
 		},
+		attr: function(attr) {
+			this._patterns.push(new Attr(attr));
+			return this;
+		},
+		action: function(action) {
+			this._patterns.push(new Action(action));
+			return this;
+		},
 		test: function(str, index, attribute) {
 			var caps = {},
-				attr = nvf(this._attribute, attribute),
+				attr = attribute,
 				result,
 				ind = index ? index : 0;
 			return testRe(str, ind, this, 0, caps, attr);
 		}
 	};
+	function generateStatic(name) {
+		return function() {
+			var res = new Rena(),
+				args = Array.prototype.slice.call(arguments);
+			return res[name].apply(res, args);
+		}
+	}
+	Rena.or = generateStatic("or");
+	Rena.anyChars = generateStatic("anyChars");
+	Rena.maybe = generateStatic("maybe");
+	Rena.times = generateStatic("times");
+	Rena.atLeast = generateStatic("atLeast");
+	Rena.atMost = generateStatic("atMost");
+	Rena.zeroOrMore = generateStatic("zeroOrMore");
+	Rena.oneOrMore = generateStatic("oneOrMore");
+	Rena.delimit = generateStatic("delimit");
+	Rena.lookahead = generateStatic("lookahead");
+	Rena.lookaheadNot = generateStatic("lookaheadNot");
+	Rena.cond = generateStatic("cond");
+	Rena.passAll = generateStatic("passAll");
+	Rena.attr = generateStatic("attr");
+	Rena.action = generateStatic("action");
 	Rena.pass = function() {};
 	Rena.delay = function(thunk) {
 		var memo = null;
