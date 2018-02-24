@@ -73,9 +73,10 @@
 		this.addr = addr;
 		this.maximum = maximum;
 	}
-	function Then(pattern, action) {
+	function Then(pattern, action, actionId) {
 		this.pattern = wrap(pattern);
 		this.action = action;
+		this.actionId = actionId;
 	}
 	function Lookahead(pattern, positive) {
 		this.pattern = wrap(pattern);
@@ -127,6 +128,9 @@
 				if(!!(match = inst.pattern(str, index, attr))) {
 					index = match.lastIndex;
 					attr = executeAction(attr, inst.action, match);
+					if(inst.actionId) {
+						captures[inst.actionId].push(match);
+					}
 				} else {
 					return null;
 				}
@@ -173,7 +177,7 @@
 				if(inst.action) {
 					captures[inst.action].push(match);
 				}
-				pc = match.match === "" || (inst.maximum >= 0 && count >= inst.maximum) ? pc + 1 : pc + inst.addr;
+				pc = inst.maximum >= 0 && count >= inst.maximum ? pc + 1 : pc + inst.addr;
 			} else if(inst instanceof Lookahead) {
 				if(!inst.pattern(str, index, attr) === inst.positive) {
 					return null;
@@ -248,6 +252,16 @@
 		},
 		zeroOrMore: function(pattern, action, init) {
 			return this.atLeast(0, pattern, action, init);
+		},
+		delimit: function(pattern, delimiter, action, init) {
+			var action = new NewAction(action);
+			this._patterns.push(action);
+			this._patterns.push(new Then(pattern, null, action.action));
+			this._patterns.push(new Repeat(action.action, init, 4, 0));
+			this.then(wrap(delimiter));
+			this.then(wrap(pattern));
+			this._patterns.push(new GoTo(action.action, -3, -1));
+			return this;
 		},
 		lookahead: function(pattern, positive) {
 			var pos = positive === void 0 ? true : positive;
