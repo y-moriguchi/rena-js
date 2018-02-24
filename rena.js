@@ -217,10 +217,14 @@
 			return res;
 		}
 		this._patterns = [];
+		this._ignore = Rena._ignore;
 	}
 	Rena.prototype = {
 		then: function(pattern, action) {
 			this._patterns.push(new Then(pattern, action));
+			if(this._ignore) {
+				this._patterns.push(new Then(this._ignore, Rena.pass));
+			}
 			return this;
 		},
 		thenPass: function(pattern) {
@@ -233,10 +237,13 @@
 				alts[i] = wrap(arguments[i]);
 			}
 			this._patterns.push(new Alt(null, alts));
+			if(this._ignore) {
+				this._patterns.push(new Then(this._ignore, Rena.pass));
+			}
 			return this;
 		},
 		anyChars: function() {
-			this._patterns.push(function(str, index) {
+			this.then(function(str, index) {
 				if(index < str.length) {
 					return {
 						match: str.charAt(index),
@@ -256,11 +263,15 @@
 			return this;
 		},
 		times: function(countmin, countmax, pattern, action, init) {
-			var action = new NewAction(action);
+			var action = new NewAction(action),
+				repeat = new Repeat(action.action, init, 0, countmin),
+				addr;
 			this._patterns.push(action);
-			this._patterns.push(new Repeat(action.action, init, 3, countmin));
+			addr = this._patterns.length;
+			this._patterns.push(repeat);
 			this.then(wrap(pattern));
-			this._patterns.push(new GoTo(action.action, -2, countmax));
+			this._patterns.push(new GoTo(action.action, addr - this._patterns.length, countmax));
+			repeat.addr = this._patterns.length - addr;
 			return this;
 		},
 		atLeast: function(count, pattern, action, init) {
@@ -276,13 +287,20 @@
 			return this.atLeast(1, pattern, action, init);
 		},
 		delimit: function(pattern, delimiter, action, init) {
-			var action = new NewAction(action);
+			var action = new NewAction(action),
+				repeat = new Repeat(action.action, init, 0, 0),
+				addr;
 			this._patterns.push(action);
 			this._patterns.push(new Then(pattern, null, action.action));
-			this._patterns.push(new Repeat(action.action, init, 4, 0));
+			if(this._ignore) {
+				this._patterns.push(new Then(this._ignore, Rena.pass));
+			}
+			addr = this._patterns.length;
+			this._patterns.push(repeat);
 			this.then(wrap(delimiter));
 			this.then(wrap(pattern));
-			this._patterns.push(new GoTo(action.action, -3, -1));
+			this._patterns.push(new GoTo(action.action, addr - this._patterns.length, -1));
+			repeat.addr = this._patterns.length - addr;
 			return this;
 		},
 		lookahead: function(pattern, positive) {
@@ -340,6 +358,10 @@
 	Rena.attr = generateStatic("attr");
 	Rena.action = generateStatic("action");
 	Rena.pass = function() {};
+	Rena.ignore = function(pattern) {
+		Rena._ignore = pattern ? wrap(pattern) : null;
+	};
+	Rena.ignore(null);
 	Rena.delay = function(thunk) {
 		var memo = null;
 		return function(str, index) {
