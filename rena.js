@@ -9,6 +9,9 @@
 (function(root) {
 	var actions = [],
 		actionId = 1;
+	function isArray(arg) {
+		return Object.prototype.toString.call(arg) === '[object Array]';
+	}
 	function nvf(old, value) {
 		return (value === void 0 || value === null) ? old : value;
 	}
@@ -54,6 +57,44 @@
 			throw new Error("Unsupported Type");
 		}
 	}
+	function Trie(keywords) {
+		var i,
+			j,
+			trie,
+			ch;
+		this._trie = {};
+		for(i = 0; i < keywords.length; i++) {
+			trie = this._trie;
+			for(j = 0; j < keywords[i].length; j++) {
+				ch = keywords[i].charAt(j);
+				if(!trie[ch]) {
+					trie[ch] = {};
+				}
+				trie = trie[ch];
+			}
+		}
+	}
+	Trie.prototype = {
+		search: function(str, index) {
+			var trie = this._trie,
+				i,
+				ch,
+				res = "";
+			for(i = index; i < str.length; i++) {
+				ch = str.charAt(i);
+				if(trie[ch]) {
+					trie = trie[ch];
+					res += ch;
+				} else {
+					break;
+				}
+			}
+			return {
+				match: res,
+				lastIndex: i
+			};
+		}
+	};
 	function NewAction(action) {
 		actions[actionId] = action;
 		this.action = actionId++;
@@ -94,6 +135,10 @@
 		this.action = action;
 	}
 	function Ignore() {
+	}
+	function MatchTrie(trie, word) {
+		this.trie = trie;
+		this.word = word;
 	}
 	function testRe(str, startIndex, rena, startpc, captures, attribute, countRepetation) {
 		var pc = startpc,
@@ -187,6 +232,15 @@
 					captures[inst.action].push(match);
 				}
 				pc = inst.maximum >= 0 && count >= inst.maximum ? pc + 1 : pc + inst.addr;
+			} else if(inst instanceof MatchTrie) {
+				match = inst.trie.search(str, index);
+				if(match.match === inst.word) {
+					index = match.lastIndex;
+					ignorePattern();
+					pc++;
+				} else {
+					return null;
+				}
 			} else if(inst instanceof Lookahead) {
 				if(!inst.pattern(str, index, attr) === inst.positive) {
 					return null;
@@ -217,15 +271,12 @@
 			attribute: attr
 		};
 	}
-	function Rena(arg1) {
+	function Rena(arg1, arg2) {
 		var res;
 		if(!(this instanceof Rena)) {
-			if(arg1 instanceof Rena) {
-				return arg1;
-			}
 			res = new Rena();
 			if(arg1 !== void 0) {
-				res.then(arg1);
+				res.then(arg1, arg2);
 			}
 			return res;
 		}
@@ -334,6 +385,13 @@
 			this._patterns.push(new Action(action));
 			return this;
 		},
+		key: function(trie, word) {
+			this._patterns.push(new MatchTrie(trie, word));
+			return this;
+		},
+		notKey: function(trie) {
+			return this.keyword(trie, "");
+		},
 		test: function(str, index, attribute) {
 			var caps = {},
 				attr = attribute,
@@ -364,20 +422,15 @@
 	Rena.passAll = generateStatic("passAll");
 	Rena.attr = generateStatic("attr");
 	Rena.action = generateStatic("action");
+	Rena.key = generateStatic("key");
+	Rena.notKey = generateStatic("notKey");
 	Rena.pass = function() {};
 	Rena.ignore = function(pattern) {
 		Rena._ignore = pattern ? wrap(pattern) : null;
 	};
 	Rena.ignore(null);
-	Rena.delay = function(thunk) {
-		var memo = null;
-		return function(str, index) {
-			if(!memo) {
-				memo = thunk();
-			}
-			return memo(str, index);
-		};
-	};
+	Rena.I = function(x) { return x; };
+	Rena.SK = Rena.F = function(x, y) { return y; };
 	Rena.Y = function(f) {
 		return (function(g) {
 			return g(g);
@@ -391,17 +444,38 @@
 	/**
 	 * http://okmij.org/ftp/Computation/fixed-point-combinators.html
 	 */
-	Rena.Yn = function() {
-		var l = Array.prototype.slice.call(arguments);
-		return (function(g) {
+	Rena.letrec = Rena.Yn = function() {
+		var l = Array.prototype.slice.call(arguments),
+			i,
+			res;
+		res = (function(g) {
 			return g(g);
 		})(function(p) {
-			return l.map(function(li) {
-				return function(str, index, captures) {
-					return (wrap(li.apply(null, p(p))))(str, index, captures);
-				};
-			});
-		}).map(function(f) { return new Rena().then(f); })[0];
+			var i,
+				li,
+				res = [];
+			for(i = 0; i < l.length; i++) {
+				(function (li) {
+					res.push(function(str, index, captures) {
+						return (wrap(li.apply(null, p(p))))(str, index, captures);
+					});
+				})(l[i]);
+			}
+			return res;
+		});
+		for(i = 0; i < res.length; i++) {
+			res[i] = new Rena().then(res[i]);
+		}
+		return res[0];
+	};
+	Rena.createKey = function(keywords) {
+		var keys;
+		if(isArray(keywords)) {
+			keys = keywords;
+		} else {
+			keys = Array.prototype.slice.call(arguments);
+		}
+		return new Trie(keys);
 	};
 	if(typeof module !== "undefined" && module.exports) {
 		module.exports = Rena;
