@@ -89,7 +89,7 @@
 				};
 			} else if(pattern instanceof Rena) {
 				return function(str, index, attr) {
-					return pattern.test(str, index, attr);
+					return pattern.parse(str, index, attr);
 				};
 			} else if(typeof pattern === "function") {
 				return pattern;
@@ -294,8 +294,21 @@
 				this._patterns.push(new Then(pattern, action));
 				return this;
 			},
+			t: function(pattern, action) {
+				return this.then(pattern, action);
+			},
 			thenPass: function(pattern) {
 				return this.then(pattern, Rena.pass);
+			},
+			thenInt: function(pattern) {
+				return this.then(pattern, function(x) {
+					return parseInt(x);
+				});
+			},
+			thenFloat: function(pattern) {
+				return this.then(pattern, function(x) {
+					return parseFloat(x);
+				});
 			},
 			or: function() {
 				var alts = [],
@@ -393,9 +406,9 @@
 				return this;
 			},
 			notKey: function(trie) {
-				return this.keyword("", trie);
+				return this.key("", trie);
 			},
-			test: function(str, index, attribute) {
+			parse: function(str, index, attribute) {
 				var caps = {},
 					attr = attribute,
 					result,
@@ -410,6 +423,11 @@
 				return res[name].apply(res, args);
 			}
 		}
+		Rena.then = generateStatic("then");
+		Rena.t = generateStatic("t");
+		Rena.thenPass = generateStatic("thenPass");
+		Rena.thenInt = generateStatic("thenInt");
+		Rena.thenFloat = generateStatic("thenFloat");
 		Rena.or = generateStatic("or");
 		Rena.anyChars = generateStatic("anyChars");
 		Rena.maybe = generateStatic("maybe");
