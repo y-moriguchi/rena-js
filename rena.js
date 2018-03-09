@@ -9,12 +9,13 @@
 (function(root) {
 	var actions = [],
 		actionId = 1,
-		RenaModule;
+		RenaModule,
+		undef = void 0;
 	function isArray(arg) {
 		return Object.prototype.toString.call(arg) === '[object Array]';
 	}
 	function nvf(old, value) {
-		return (value === void 0 || value === null) ? old : value;
+		return (value === undef || value === null) ? old : value;
 	}
 	/**
 	 * Keyword store using trie tree.
@@ -97,7 +98,8 @@
 					if(!!(match = regex.exec(str.substr(index))) && match.index === 0) {
 						return {
 							match: match[0],
-							lastIndex: index + regex.lastIndex
+							lastIndex: index + regex.lastIndex,
+							extra: match
 						};
 					} else {
 						return null;
@@ -217,9 +219,9 @@
 				i;
 			function executeAction(attr, action, match) {
 				if(passAction) {
-					return void 0;
+					return undef;
 				} else if(action) {
-					return nvf(attr, action(match.match, match.attribute, attr));
+					return nvf(attr, action(match.match, match.attribute, attr, match.extra));
 				} else {
 					return nvf(attr, match.attribute);
 				}
@@ -260,7 +262,7 @@
 					pc++;
 				} else if(inst instanceof Repeat) {
 					if(!!(match = testRe(str, index, rena, pc + 1, captures, attr, count + 1))) {
-						attr = passAction ? void 0 : nvf(attr, match.attribute);
+						attr = passAction ? undef : nvf(attr, match.attribute);
 						if(count === 0) {
 							attr = nvf(attr, inst.init);
 							attr = executeRepeatAction(attr, inst);
@@ -285,7 +287,7 @@
 								captures[inst.action] = matchNext.match;
 							}
 							index = match.lastIndex;
-							attr = passAction ? void 0 : nvf(attr, match.attribute);
+							attr = passAction ? undef : nvf(attr, match.attribute);
 							ignorePattern();
 							pc++;
 							continue outer;
@@ -328,6 +330,8 @@
 				} else if(inst instanceof Ignore) {
 					ignorePattern();
 					pc++;
+				} else {
+					throw new Error("Internal Error");
 				}
 			}
 			return {
@@ -348,7 +352,7 @@
 			var res;
 			if(!(this instanceof Rena)) {
 				res = new Rena();
-				if(pattern !== void 0) {
+				if(pattern !== undef) {
 					res.then(pattern, action);
 				}
 				return res;
@@ -409,6 +413,13 @@
 				});
 			},
 			/**
+			 * matches a newline.
+			 * @return {Rena} this instance
+			 */
+			br: function() {
+				return this.then(/\r|\n|\r\n/);
+			},
+			/**
 			 * matches one of the given patterns.
 			 * @return {Rena} this instance
 			 */
@@ -430,7 +441,7 @@
 			maybe: function(pattern, action) {
 				var action = new NewAction(action);
 				this._patterns.push(action);
-				this._patterns.push(new Repeat(action.action, void 0, 2, 0));
+				this._patterns.push(new Repeat(action.action, undef, 2, 0));
 				this.then(wrap(pattern));
 				return this;
 			},
@@ -447,6 +458,11 @@
 				var action = new NewAction(action),
 					repeat = new Repeat(action.action, init, 0, countmin),
 					addr;
+				if(countmin < 0) {
+					throw new Error("minimum of repetition must be non negative");
+				} else if(countmax >= 0 && (countmin > countmax)) {
+					throw new Error("minimum must be less than or equal to maximum");
+				}
 				this._patterns.push(action);
 				addr = this._patterns.length;
 				this._patterns.push(repeat);
@@ -526,7 +542,7 @@
 			 * @return {Rena} this instance
 			 */
 			lookahead: function(pattern, positive) {
-				var pos = positive === void 0 ? true : positive;
+				var pos = positive === undef ? true : positive;
 				this._patterns.push(new Lookahead(wrap(pattern), pos));
 				return this;
 			},
@@ -620,6 +636,7 @@
 		Rena.thenPass = generateStatic("thenPass");
 		Rena.thenInt = generateStatic("thenInt");
 		Rena.thenFloat = generateStatic("thenFloat");
+		Rena.br = generateStatic("br");
 		Rena.or = generateStatic("or");
 		Rena.maybe = generateStatic("maybe");
 		Rena.times = generateStatic("times");
@@ -657,7 +674,23 @@
 			}
 			Rena._trie = new Trie(keys);
 		};
-		Rena.ignore(null);
+		/**
+		 * defines nonterminal variables.
+		 */
+		Rena.defineNonterminals = function(nonterminals) {
+			var variables,
+				result = [],
+				i;
+			if(isArray(nonterminals)) {
+				variables = nonterminals;
+			} else {
+				variables = Array.prototype.slice.call(arguments);
+			}
+			for(i = 0; i < variables.length; i++) {
+				result[variables[i]] = new Rena();
+			}
+			return result;
+		};
 		/**
 		 * a function which returns first argument.
 		 */
@@ -723,6 +756,10 @@
 		return Rena;
 	};
 	RenaModule = RenaFactory();
+	/**
+	 * clones the module.
+	 * @return {Object} a cloned module
+	 */
 	RenaModule.clone = RenaFactory;
 	if(typeof module !== "undefined" && module.exports) {
 		module.exports = RenaModule;
