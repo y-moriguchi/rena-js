@@ -226,9 +226,9 @@
 					return nvf(attr, match.attribute);
 				}
 			}
-			function executeRepeatAction(attr, inst) {
+			function executeRepeatAction(attr, inst, count) {
 				if(inst.action) {
-					for(i = 0; i < captures[inst.action].length; i++) {
+					for(i = 0; i < count; i++) {
 						attr = executeAction(attr, actions[inst.action], captures[inst.action][i]);
 					}
 				}
@@ -265,17 +265,15 @@
 						attr = passAction ? undef : nvf(attr, match.attribute);
 						if(count === 0) {
 							attr = nvf(attr, inst.init);
-							attr = executeRepeatAction(attr, inst);
+							attr = executeRepeatAction(attr, inst, match.count);
 						}
 						return {
 							match: str.substring(startIndex, match.lastIndex),
 							lastIndex: match.lastIndex,
-							attribute: attr
+							attribute: attr,
+							count: match.count
 						};
 					} else if(count >= inst.minimum) {
-						if(inst.captureName && captures[inst.action].length > 0) {
-							captures[inst.action].pop();
-						}
 						pc = pc + inst.addr;
 					} else {
 						return null;
@@ -337,7 +335,8 @@
 			return {
 				match: str.substring(startIndex, index),
 				lastIndex: index,
-				attribute: attr
+				attribute: attr,
+				count: count
 			};
 		}
 		/**
@@ -417,7 +416,7 @@
 			 * @return {Rena} this instance
 			 */
 			br: function() {
-				return this.then(/\r|\n|\r\n/);
+				return this.then(/\r\n|\r|\n/);
 			},
 			/**
 			 * matches one of the given patterns.
@@ -439,11 +438,7 @@
 			 * @return {Rena} this instance
 			 */
 			maybe: function(pattern, action) {
-				var action = new NewAction(action);
-				this._patterns.push(action);
-				this._patterns.push(new Repeat(action.action, undef, 2, 0));
-				this.then(wrap(pattern));
-				return this;
+				return this.times(0, 1, pattern, action);
 			},
 			/**
 			 * repeats the given patterns to the given count.
@@ -460,6 +455,8 @@
 					addr;
 				if(countmin < 0) {
 					throw new Error("minimum of repetition must be non negative");
+				} else if(countmin == 0 && countmax == 0) {
+					throw new Error("both minimum and maximum must not be all zero");
 				} else if(countmax >= 0 && (countmin > countmax)) {
 					throw new Error("minimum must be less than or equal to maximum");
 				}
