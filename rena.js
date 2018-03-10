@@ -213,6 +213,8 @@
 				attr = attribute,
 				passAction = false,
 				count = countRepetation ? countRepetation : 0,
+				precount = 0,
+				preattr,
 				match,
 				inst,
 				beforeLength,
@@ -249,6 +251,7 @@
 						attr = executeAction(attr, inst.action, match);
 						if(inst.actionId) {
 							captures[inst.actionId].push(match);
+							precount = 1;
 						}
 						ignorePattern();
 					} else {
@@ -258,14 +261,15 @@
 				} else if(inst instanceof NewAction) {
 					if(inst.action && !captures[inst.action]) {
 						captures[inst.action] = [];
+						preattr = attr;
 					}
 					pc++;
 				} else if(inst instanceof Repeat) {
 					if(!!(match = testRe(str, index, rena, pc + 1, captures, attr, count + 1))) {
 						attr = passAction ? undef : nvf(attr, match.attribute);
 						if(count === 0) {
-							attr = nvf(attr, inst.init);
-							attr = executeRepeatAction(attr, inst, match.count);
+							attr = nvf(attr, nvf(inst.init, preattr));
+							attr = executeRepeatAction(attr, inst, match.count + precount);
 						}
 						return {
 							match: str.substring(startIndex, match.lastIndex),
@@ -274,6 +278,9 @@
 							count: match.count
 						};
 					} else if(count >= inst.minimum) {
+						if(count === inst.minimum) {
+							attr = passAction ? undef : nvf(attr, nvf(inst.init, preattr));
+						}
 						pc = pc + inst.addr;
 					} else {
 						return null;
@@ -317,10 +324,10 @@
 					}
 					pc++;
 				} else if(inst instanceof Attr) {
-					attr = inst.attr;
+					attr = passAction ? undef : inst.attr;
 					pc++;
 				} else if(inst instanceof Action) {
-					attr = nvf(attr, inst.action(attr));
+					attr = passAction ? undef : nvf(attr, inst.action(attr));
 					pc++;
 				} else if(inst instanceof PassAll) {
 					passAction = true;
@@ -359,11 +366,17 @@
 			this._patterns = [];
 			this._ignore = Rena._ignore;
 			this._trie = Rena._trie;
+			this._noChain = false;
 			if(this._ignore) {
 				this._patterns.push(new Ignore());
 			}
 		}
 		Rena.prototype = {
+			_checkNoChain: function() {
+				if(this._noChain) {
+					throw new Error("this instance cannot repeat after this");
+				}
+			},
 			/**
 			 * simply matches to the pattern.
 			 * @param {Object} pattern a pattern to match
@@ -419,6 +432,18 @@
 				return this.then(/\r\n|\r|\n/);
 			},
 			/**
+			 * matches end of string
+			 * @return {Rena} this instance
+			 */
+			isEnd: function() {
+				return this.then(function(x, index) {
+					return index < x.length ? null : {
+						match: "",
+						lastIndex: index
+					};
+				});
+			},
+			/**
 			 * matches one of the given patterns.
 			 * @return {Rena} this instance
 			 */
@@ -430,15 +455,6 @@
 				}
 				this._patterns.push(new Alt(null, alts));
 				return this;
-			},
-			/**
-			 * matches zero or one of the given patterns.
-			 * @param {Object} pattern a pattern to match
-			 * @param {Function} action an action to be invoked
-			 * @return {Rena} this instance
-			 */
-			maybe: function(pattern, action) {
-				return this.times(0, 1, pattern, action);
 			},
 			/**
 			 * repeats the given patterns to the given count.
@@ -460,12 +476,14 @@
 				} else if(countmax >= 0 && (countmin > countmax)) {
 					throw new Error("minimum must be less than or equal to maximum");
 				}
+				this._checkNoChain();
 				this._patterns.push(action);
 				addr = this._patterns.length;
 				this._patterns.push(repeat);
 				this.then(wrap(pattern));
 				this._patterns.push(new GoTo(action.action, addr - this._patterns.length, countmax));
 				repeat.addr = this._patterns.length - addr;
+				this._noChain = true;
 				return this;
 			},
 			/**
@@ -489,6 +507,15 @@
 			 */
 			atMost: function(count, pattern, action, init) {
 				return this.times(0, count, pattern, action, init);
+			},
+			/**
+			 * matches zero or one of the given patterns.
+			 * @param {Object} pattern a pattern to match
+			 * @param {Function} action an action to be invoked
+			 * @return {Rena} this instance
+			 */
+			maybe: function(pattern, action) {
+				return this.times(0, 1, pattern, action);
 			},
 			/**
 			 * a shortcut of 'atLeast(0, pattern, action, init)'.
@@ -522,6 +549,7 @@
 				var action = new NewAction(action),
 					repeat = new Repeat(action.action, init, 0, 0),
 					addr;
+				this._checkNoChain();
 				this._patterns.push(action);
 				this._patterns.push(new Then(pattern, null, action.action));
 				addr = this._patterns.length;
@@ -530,6 +558,7 @@
 				this.then(wrap(pattern));
 				this._patterns.push(new GoTo(action.action, addr - this._patterns.length, -1));
 				repeat.addr = this._patterns.length - addr;
+				this._noChain = true;
 				return this;
 			},
 			/**
@@ -634,6 +663,7 @@
 		Rena.thenInt = generateStatic("thenInt");
 		Rena.thenFloat = generateStatic("thenFloat");
 		Rena.br = generateStatic("br");
+		Rena.isEnd = generateStatic("isEnd");
 		Rena.or = generateStatic("or");
 		Rena.maybe = generateStatic("maybe");
 		Rena.times = generateStatic("times");
