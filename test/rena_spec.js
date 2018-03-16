@@ -135,17 +135,15 @@ describe("Rena", function () {
 			match(R().times(2, -1, "str"), "strstr", "strstr", 6);
 			match(R().times(2, -1, "str"), "strstrstrstrstr", "strstrstrstrstr", 15);
 			nomatch(R().times(2, -1, "str"), "str");
-			expect(function() { R().times(-1, 1).parse("a"); }).toThrow();
-			expect(function() { R().times(0, 0).parse("a"); }).toThrow();
-			expect(function() { R().times(1, 0).parse("a"); }).toThrow();
+			expect(function() { R().times(-1, 1, "str").parse("a"); }).toThrow();
+			expect(function() { R().times(0, 0, "str").parse("a"); }).toThrow();
+			expect(function() { R().times(1, 0, "str").parse("a"); }).toThrow();
 			match(R.times(2, 4, "str"), "strstr", "strstr", 6);
 		});
 		it("attribute of times", function () {
 			var ptn1 = R().times(1, -1, R.then(/[a-z]/, R.I), function(x, a, b) { return a + b; }, ""),
-				ptn2 = R().times(1, -1, R.then(/[a-z]/, R.I), function(x, a, b) { return a + b; }, "").then(/[a-z]/),
 				ptn3 = R().times(1, 3, R.then(/[a-z]/, R.I), function(x, a, b) { return a + b; }, "");
 			expect(ptn1.parse("string").attribute).toBe("gnirts");
-			expect(ptn2.parse("string").attribute).toBe("nirts");
 			expect(ptn3.parse("string").attribute).toBe("rts");
 			expect(ptn3.parse("str").attribute).toBe("rts");
 			expect(ptn3.parse("st").attribute).toBe("ts");
@@ -156,7 +154,7 @@ describe("Rena", function () {
 			match(R().atLeast(2, "str"), "strstr", "strstr", 6);
 			match(R().atLeast(2, "str"), "strstrstrstrstr", "strstrstrstrstr", 15);
 			nomatch(R().atLeast(2, "str"), "str");
-			expect(function() { R().atLeast(-1).parse("a"); }).toThrow();
+			expect(function() { R().atLeast(-1, "str").parse("a"); }).toThrow();
 			expect(ptn1.parse("string").attribute).toBe("gnirts");
 		});
 		it("atMost", function () {
@@ -210,6 +208,51 @@ describe("Rena", function () {
 			nomatch(R().delimit(/[0-9]+/, "+"), "+961");
 			expect(ptn1.parse("765+346+876").attribute).toBe("876346765");
 			match(R.delimit(/[0-9]+/, "+"), "7+65", "7+65", 4);
+		});
+		it("timesArray", function () {
+			var ptn1 = R().timesArray(1, -1, R.then(/[a-z]/, R.I)),
+				ptn2 = R.timesArray(1, -1, R.then(/[a-z]/, R.I));
+			expect(ptn1.parse("str").attribute).toEqual(["s", "t", "r"]);
+			expect(ptn1.parse("s").attribute).toEqual(["s"]);
+			expect(ptn2.parse("str").attribute).toEqual(["s", "t", "r"]);
+		});
+		it("atLeastArray", function () {
+			var ptn1 = R().atLeastArray(1, R.then(/[a-z]/, R.I)),
+				ptn2 = R.atLeastArray(1, R.then(/[a-z]/, R.I));
+			expect(ptn1.parse("str").attribute).toEqual(["s", "t", "r"]);
+			expect(ptn1.parse("s").attribute).toEqual(["s"]);
+			expect(ptn2.parse("str").attribute).toEqual(["s", "t", "r"]);
+		});
+		it("atMostArray", function () {
+			var ptn1 = R().atMostArray(3, R.then(/[a-z]/, R.I)),
+				ptn2 = R.atMostArray(3, R.then(/[a-z]/, R.I));
+			expect(ptn1.parse("stri").attribute).toEqual(["s", "t", "r"]);
+			expect(ptn1.parse("str").attribute).toEqual(["s", "t", "r"]);
+			expect(ptn1.parse("s").attribute).toEqual(["s"]);
+			expect(ptn1.parse("").attribute).toEqual([]);
+			expect(ptn2.parse("str").attribute).toEqual(["s", "t", "r"]);
+		});
+		it("oneOrMoreArray", function () {
+			var ptn1 = R().oneOrMoreArray(R.then(/[a-z]/, R.I)),
+				ptn2 = R.oneOrMoreArray(R.then(/[a-z]/, R.I));
+			expect(ptn1.parse("str").attribute).toEqual(["s", "t", "r"]);
+			expect(ptn1.parse("s").attribute).toEqual(["s"]);
+			expect(ptn2.parse("str").attribute).toEqual(["s", "t", "r"]);
+		});
+		it("zeroOrMoreArray", function () {
+			var ptn1 = R().zeroOrMoreArray(R.then(/[a-z]/, R.I)),
+				ptn2 = R().zeroOrMoreArray(R.then(/[a-z]/, R.I));
+			expect(ptn1.parse("str").attribute).toEqual(["s", "t", "r"]);
+			expect(ptn1.parse("s").attribute).toEqual(["s"]);
+			expect(ptn1.parse("").attribute).toEqual([]);
+			expect(ptn2.parse("str").attribute).toEqual(["s", "t", "r"]);
+		});
+		it("delimitArray", function () {
+			var ptn1 = R().delimitArray(R.then(/[0-9]+/, R.I), "+"),
+				ptn2 = R().delimitArray(R.then(/[0-9]+/, R.I), "+");
+			expect(ptn1.parse("765+346+876").attribute).toEqual(["765", "346", "876"]);
+			expect(ptn1.parse("765").attribute).toEqual(["765"]);
+			expect(ptn2.parse("765+346+876").attribute).toEqual(["765", "346", "876"]);
 		});
 		it("lookahead", function () {
 			match(R().lookahead(/[0-9]+pro/, true).then(/[0-9]+/), "765pro", "765", 3);
@@ -299,10 +342,12 @@ describe("Rena", function () {
 		});
 		it("I", function () {
 			expect(R.I(1)).toBe(1);
+			expect(R.first(1)).toBe(1);
 		});
 		it("F", function () {
 			expect(R.F(1, 2)).toBe(2);
 			expect(R.SK(1, 2)).toBe(2);
+			expect(R.second(1, 2)).toBe(2);
 		});
 		it("Y", function () {
 			var ptn1 = R.Y(function(s) {
@@ -349,6 +394,33 @@ describe("Rena", function () {
 			Q.ignore(/\s+/);
 			expect(ptn1.parse(" 1  +  2  *  3  ").attribute).toBe(7);
 			expect(ptn1.parse("  4  -  6/   2   ").attribute).toBe(1);
+		});
+		it("inhibited chain", function () {
+			var i;
+			for(i in R) {
+				if(R.prototype.hasOwnProperty(i)) {
+					if(i !== "br" && i !== "isEnd") {
+						expect(function() { (R().times(0, 1, "str"))[i]().parse("a"); }).toThrow();
+						expect(function() { (R().maybe("str"))[i]().parse("a"); }).toThrow();
+						expect(function() { (R().atLeast(1, "str"))[i]().parse("a"); }).toThrow();
+						expect(function() { (R().atMost(1, "str"))[i]().parse("a"); }).toThrow();
+						expect(function() { (R().zeroOrMore("str"))[i]().parse("a"); }).toThrow();
+						expect(function() { (R().oneOrMore("str"))[i]().parse("a"); }).toThrow();
+						expect(function() { (R().delimit("str", "x"))[i]().parse("a"); }).toThrow();
+					}
+				}
+			}
+		});
+		it("CSV", function () {
+			var csvparser = new R();
+			csvparser.t(R.attr([]).maybe(R.delimitArray(R.delimitArray(R.or(
+				R('"').t(/(""|[^"])+/, function(x) { return x.replace('""', '"'); }).t('"'),
+				R(/[^",\n\r]+/, R.I)), ","), R.br()))).maybe(R.br()).isEnd();
+			expect(csvparser.parse('a,b,c\nd,"e\n""f",g\nh\n').attribute).toEqual([["a","b","c"],["d","e\n\"f","g"],["h"]]);
+			expect(csvparser.parse('a,b,c\nd,"e\n""f",g\nh').attribute).toEqual([["a","b","c"],["d","e\n\"f","g"],["h"]]);
+			expect(csvparser.parse('d,"e\n""f",g').attribute).toEqual([["d","e\n\"f","g"]]);
+			expect(csvparser.parse('d').attribute).toEqual([["d"]]);
+			expect(csvparser.parse('').attribute).toEqual([]);
 		});
 	});
 });

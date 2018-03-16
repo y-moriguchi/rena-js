@@ -10,14 +10,15 @@
 	var actions = [],
 		actionId = 1,
 		RenaModule,
-		undef = void 0;
+		undef = void 0,
+		i;
 	function isArray(arg) {
 		return Object.prototype.toString.call(arg) === '[object Array]';
 	}
 	function nvf(old, value) {
 		return (value === undef || value === null) ? old : value;
 	}
-	/**
+	/*
 	 * Keyword store using trie tree.
 	 * @constructor
 	 */
@@ -39,7 +40,7 @@
 		}
 	}
 	Trie.prototype = {
-		/**
+		/*
 		 * searches a keyword.
 		 * @param {String} str a string to be searched
 		 * @param {Number} index an index to be searched
@@ -65,11 +66,11 @@
 			};
 		}
 	};
-	/**
+	/*
 	 * a function which creates Rena module.
 	 */
 	function RenaFactory() {
-		/**
+		/*
 		 * transform the given object to searchable function.
 		 */
 		function wrap(pattern) {
@@ -115,14 +116,14 @@
 				throw new Error("Unsupported Type");
 			}
 		}
-		/**
+		/*
 		 * an instruction of new action
 		 */
 		function NewAction(action) {
 			actions[actionId] = action;
 			this.action = actionId++;
 		}
-		/**
+		/*
 		 * a repetation instruction
 		 */
 		function Repeat(action, init, addr, minimum) {
@@ -131,14 +132,14 @@
 			this.addr = addr;
 			this.minimum = minimum;
 		}
-		/**
+		/*
 		 * an instruction of alternation
 		 */
 		function Alt(action, alternates) {
 			this.action = action;
 			this.alternates = alternates;
 		}
-		/**
+		/*
 		 * an instruction of control flow
 		 */
 		function GoTo(action, addr, maximum) {
@@ -146,7 +147,7 @@
 			this.addr = addr;
 			this.maximum = maximum;
 		}
-		/**
+		/*
 		 * an instruction of simple match
 		 */
 		function Then(pattern, action, actionId) {
@@ -154,49 +155,49 @@
 			this.action = action;
 			this.actionId = actionId;
 		}
-		/**
+		/*
 		 * an instruction of lookaehad
 		 */
 		function Lookahead(pattern, positive) {
 			this.pattern = wrap(pattern);
 			this.positive = positive;
 		}
-		/**
+		/*
 		 * an instruction of condition
 		 */
 		function Cond(cond) {
 			this.cond = cond;
 		}
-		/**
+		/*
 		 * an instruction of passing all actions after this
 		 */
 		function PassAll() {
 		}
-		/**
+		/*
 		 * an instrunction of setting attribute
 		 */
 		function Attr(attr) {
 			this.attr = attr;
 		}
-		/**
+		/*
 		 * an instrunction of simply executing an action
 		 */
 		function Action(action) {
 			this.action = action;
 		}
-		/**
+		/*
 		 * an instruction of ignoring space, etc.
 		 */
 		function Ignore() {
 		}
-		/**
+		/*
 		 * an instruction of matching keyword using the given trie tree
 		 */
 		function MatchTrie(trie, word) {
 			this.trie = trie;
 			this.word = word;
 		}
-		/**
+		/*
 		 * tests a string.
 		 * @param {String} str a string to be tested
 		 * @param {Number} startIndex an index to be tested
@@ -268,7 +269,7 @@
 					if(!!(match = testRe(str, index, rena, pc + 1, captures, attr, count + 1))) {
 						attr = passAction ? undef : nvf(attr, match.attribute);
 						if(count === 0) {
-							attr = nvf(attr, nvf(inst.init, preattr));
+							attr = nvf(attr, nvf(preattr, inst.init));
 							attr = executeRepeatAction(attr, inst, match.count + precount);
 						}
 						return {
@@ -279,7 +280,8 @@
 						};
 					} else if(count >= inst.minimum) {
 						if(count === inst.minimum) {
-							attr = passAction ? undef : nvf(attr, nvf(inst.init, preattr));
+							attr = passAction ? undef : nvf(attr, nvf(preattr, inst.init));
+							attr = executeRepeatAction(attr, inst, precount);
 						}
 						pc = pc + inst.addr;
 					} else {
@@ -346,6 +348,11 @@
 				count: count
 			};
 		}
+		function addArray(x, a, b) {
+			var result = [].concat(b);
+			result.push(a);
+			return result;
+		}
 		/**
 		 * The constructor of Rena.
 		 * If this function does not call as a constructor and arguments are given,
@@ -377,15 +384,33 @@
 					throw new Error("this instance cannot repeat after this");
 				}
 			},
+			_then: function(pattern, action) {
+				this._patterns.push(new Then(pattern, action));
+				return this;
+			},
 			/**
-			 * simply matches to the pattern.
+			 * matches to the pattern simply.
+			 * A simple string, a regular expression, a function or a Rena object can be specified as a pattern.
+			 *
+			 * The matching function must have two arguments,
+			 * first argument is the string to match and second argument is the position to match,
+			 * and return an object if it matches or null if it does not match.
+			 * The object to be returned has two properties,
+			 * one of this is the matched string which named "match",
+			 * another is the matched last position which named "lastMatch".
+			 *
+			 * The given action will be called back with two or three arguments,
+			 * first argument is the matched string,
+			 * second argument is the inherited attribute,
+			 * third argument, which is given when the pattern is regular expression, is the object which is returned by RegExp.exec().
+			 *
 			 * @param {Object} pattern a pattern to match
 			 * @param {Function} action an action to be invoked
 			 * @return {Rena} this instance
 			 */
 			then: function(pattern, action) {
-				this._patterns.push(new Then(pattern, action));
-				return this;
+				this._checkNoChain();
+				return this._then(pattern, action);
 			},
 			/**
 			 * a shortcut of 'then'.
@@ -429,14 +454,14 @@
 			 * @return {Rena} this instance
 			 */
 			br: function() {
-				return this.then(/\r\n|\r|\n/);
+				return this._then(/\r\n|\r|\n/);
 			},
 			/**
 			 * matches end of string
 			 * @return {Rena} this instance
 			 */
 			isEnd: function() {
-				return this.then(function(x, index) {
+				return this._then(function(x, index) {
 					return index < x.length ? null : {
 						match: "",
 						lastIndex: index
@@ -450,6 +475,7 @@
 			or: function() {
 				var alts = [],
 					i;
+				this._checkNoChain();
 				for(i = 0; i < arguments.length; i++) {
 					alts[i] = wrap(arguments[i]);
 				}
@@ -458,6 +484,13 @@
 			},
 			/**
 			 * repeats the given patterns to the given count.
+			 * This instance cannot chain matching after this call except br() and isEnd().
+			 *
+			 * The given action will be called back with three arguments,
+			 * first argument is the matched string,
+			 * second argument is the attribute of repeating pattern,
+			 * third argument is the inherited attribute.
+			 *
 			 * @param {Number} countmin minimum of repetation
 			 * @param {Number} countmax maximum of repetation
 			 * @param {Object} pattern a pattern to match
@@ -488,6 +521,7 @@
 			},
 			/**
 			 * repeats the given patterns at least the given count.
+			 * This instance cannot chain matching after this call except br() and isEnd().
 			 * @param {Number} count minimum of repetation
 			 * @param {Object} pattern a pattern to match
 			 * @param {Function} action an action to be invoked
@@ -499,6 +533,7 @@
 			},
 			/**
 			 * repeats the given patterns at most the given count.
+			 * This instance cannot chain matching after this call except br() and isEnd().
 			 * @param {Number} count maximum of repetation
 			 * @param {Object} pattern a pattern to match
 			 * @param {Function} action an action to be invoked
@@ -510,6 +545,7 @@
 			},
 			/**
 			 * matches zero or one of the given patterns.
+			 * This instance cannot chain matching after this call except br() and isEnd().
 			 * @param {Object} pattern a pattern to match
 			 * @param {Function} action an action to be invoked
 			 * @return {Rena} this instance
@@ -519,6 +555,7 @@
 			},
 			/**
 			 * a shortcut of 'atLeast(0, pattern, action, init)'.
+			 * This instance cannot chain matching after this call except br() and isEnd().
 			 * @param {Object} pattern a pattern to match
 			 * @param {Function} action an action to be invoked
 			 * @param {Object} init an initial attribute
@@ -529,6 +566,7 @@
 			},
 			/**
 			 * a shortcut of 'atLeast(1, pattern, action, init)'.
+			 * This instance cannot chain matching after this call except br() and isEnd().
 			 * @param {Object} pattern a pattern to match
 			 * @param {Function} action an action to be invoked
 			 * @param {Object} init an initial attribute
@@ -539,6 +577,7 @@
 			},
 			/**
 			 * matches a string which is delimited by the given string.
+			 * This instance cannot chain matching after this call except br() and isEnd().
 			 * @param {Object} pattern a pattern to match
 			 * @param {Object} delimiter a pattern of delimiter
 			 * @param {Function} action an action to be invoked
@@ -562,6 +601,65 @@
 				return this;
 			},
 			/**
+			 * repeats the given patterns to the given count with accumlating an attribute into array.
+			 * This instance cannot chain matching after this call except br() and isEnd().
+			 * @param {Number} countmin minimum of repetation
+			 * @param {Number} countmax maximum of repetation
+			 * @param {Object} pattern a pattern to match
+			 * @return {Rena} this instance
+			 */
+			timesArray: function(countmin, countmax, pattern) {
+				return this.times(countmin, countmax, pattern, addArray, []);
+			},
+			/**
+			 * repeats the given patterns at least the given count with accumlating an attribute into array.
+			 * This instance cannot chain matching after this call except br() and isEnd().
+			 * @param {Number} count minimum of repetation
+			 * @param {Object} pattern a pattern to match
+			 * @return {Rena} this instance
+			 */
+			atLeastArray: function(count, pattern) {
+				return this.times(count, -1, pattern, addArray, []);
+			},
+			/**
+			 * repeats the given patterns at most the given count with accumlating an attribute into array.
+			 * This instance cannot chain matching after this call except br() and isEnd().
+			 * @param {Number} count maximum of repetation
+			 * @param {Object} pattern a pattern to match
+			 * @return {Rena} this instance
+			 */
+			atMostArray: function(count, pattern) {
+				return this.times(0, count, pattern, addArray, []);
+			},
+			/**
+			 * a shortcut of 'atLeastArray(0, pattern)'.
+			 * This instance cannot chain matching after this call except br() and isEnd().
+			 * @param {Object} pattern a pattern to match
+			 * @return {Rena} this instance
+			 */
+			zeroOrMoreArray: function(pattern) {
+				return this.atLeast(0, pattern, addArray, []);
+			},
+			/**
+			 * a shortcut of 'atLeastArray(1, pattern)'.
+			 * This instance cannot chain matching after this call except br() and isEnd().
+			 * @param {Object} pattern a pattern to match
+			 * @return {Rena} this instance
+			 */
+			oneOrMoreArray: function(pattern) {
+				return this.atLeast(1, pattern, addArray, []);
+			},
+			/**
+			 * matches a string which is delimited by the given string with accumlating an attribute into array.
+			 * This instance cannot chain matching after this call except br() and isEnd().
+			 * @param {Object} pattern a pattern to match
+			 * @param {Object} delimiter a pattern of delimiter
+			 * @return {Rena} this instance
+			 */
+			delimitArray: function(pattern, delimiter) {
+				return this.delimit(pattern, delimiter, addArray, []);
+			},
+			/**
 			 * matches the pattern not consuming the string to be matched.
 			 * @param {Object} pattern a pattern to match
 			 * @param {Boolean} positive succeed when the pattern does not match if this value is falsy
@@ -569,6 +667,7 @@
 			 */
 			lookahead: function(pattern, positive) {
 				var pos = positive === undef ? true : positive;
+				this._checkNoChain();
 				this._patterns.push(new Lookahead(wrap(pattern), pos));
 				return this;
 			},
@@ -586,6 +685,7 @@
 			 * @return {Rena} this instance
 			 */
 			cond: function(cond) {
+				this._checkNoChain();
 				this._patterns.push(new Cond(cond));
 				return this;
 			},
@@ -594,6 +694,7 @@
 			 * @return {Rena} this instance
 			 */
 			passAll: function() {
+				this._checkNoChain();
 				this._patterns.push(new PassAll());
 				return this;
 			},
@@ -603,6 +704,7 @@
 			 * @return {Rena} this instance
 			 */
 			attr: function(attr) {
+				this._checkNoChain();
 				this._patterns.push(new Attr(attr));
 				return this;
 			},
@@ -612,6 +714,7 @@
 			 * @return {Rena} this instance
 			 */
 			action: function(action) {
+				this._checkNoChain();
 				this._patterns.push(new Action(action));
 				return this;
 			},
@@ -622,6 +725,7 @@
 			 * @return {Rena} this instance
 			 */
 			key: function(word, trie) {
+				this._checkNoChain();
 				this._patterns.push(new MatchTrie(trie ? trie : this._trie, word));
 				return this;
 			},
@@ -647,7 +751,7 @@
 				return testRe(str, ind, this, 0, caps, attr);
 			}
 		};
-		/**
+		/*
 		 * defines static method.
 		 */
 		function generateStatic(name) {
@@ -657,28 +761,207 @@
 				return res[name].apply(res, args);
 			}
 		}
+		for(i in Rena) {
+			if(Rena.prototype.hasOwnProperty(i)) {
+				Rena[i] = generateStatic(i);
+			}
+		}
+		/**
+		 * a shortcut for 'Rena().then()'.
+		 * @param {Object} pattern a pattern to match
+		 * @param {Function} action an action to be invoked
+		 * @return {Rena} new instance
+		 */
 		Rena.then = generateStatic("then");
+		/**
+		 * a shortcut for 'Rena().t()'.
+		 * @param {Object} pattern a pattern to match
+		 * @param {Function} action an action to be invoked
+		 * @return {Rena} new instance
+		 */
 		Rena.t = generateStatic("t");
+		/**
+		 * a shortcut for 'Rena().thenPass()'.
+		 * @param {Object} pattern a pattern to match
+		 * @return {Rena} new instance
+		 */
 		Rena.thenPass = generateStatic("thenPass");
+		/**
+		 * a shortcut for 'Rena().thenInt()'.
+		 * @param {Object} pattern a pattern to match
+		 * @return {Rena} new instance
+		 */
 		Rena.thenInt = generateStatic("thenInt");
+		/**
+		 * a shortcut for 'Rena().thenFloat()'.
+		 * @param {Object} pattern a pattern to match
+		 * @return {Rena} new instance
+		 */
 		Rena.thenFloat = generateStatic("thenFloat");
+		/**
+		 * a shortcut for 'Rena().br()'.
+		 * @return {Rena} new instance
+		 */
 		Rena.br = generateStatic("br");
+		/**
+		 * a shortcut for 'Rena().isEnd()'.
+		 * @return {Rena} new instance
+		 */
 		Rena.isEnd = generateStatic("isEnd");
+		/**
+		 * a shortcut for 'Rena().or()'.
+		 * @return {Rena} new instance
+		 */
 		Rena.or = generateStatic("or");
+		/**
+		 * a shortcut for 'Rena().maybe()'.
+		 * @param {Object} pattern a pattern to match
+		 * @param {Function} action an action to be invoked
+		 * @return {Rena} new instance
+		 */
 		Rena.maybe = generateStatic("maybe");
+		/**
+		 * a shortcut for 'Rena().times()'.
+		 * @param {Number} countmin minimum of repetation
+		 * @param {Number} countmax maximum of repetation
+		 * @param {Object} pattern a pattern to match
+		 * @param {Function} action an action to be invoked
+		 * @param {Object} init an initial attribute
+		 * @return {Rena} new instance
+		 */
 		Rena.times = generateStatic("times");
+		/**
+		 * a shortcut for 'Rena().atLeast()'.
+		 * @param {Number} count minimum of repetation
+		 * @param {Object} pattern a pattern to match
+		 * @param {Function} action an action to be invoked
+		 * @param {Object} init an initial attribute
+		 * @return {Rena} new instance
+		 */
 		Rena.atLeast = generateStatic("atLeast");
+		/**
+		 * a shortcut for 'Rena().atMost()'.
+		 * @param {Number} count maximum of repetation
+		 * @param {Object} pattern a pattern to match
+		 * @param {Function} action an action to be invoked
+		 * @param {Object} init an initial attribute
+		 * @return {Rena} new instance
+		 */
 		Rena.atMost = generateStatic("atMost");
+		/**
+		 * a shortcut for 'Rena().zeroOrMore()'.
+		 * @param {Object} pattern a pattern to match
+		 * @param {Function} action an action to be invoked
+		 * @param {Object} init an initial attribute
+		 * @return {Rena} new instance
+		 */
 		Rena.zeroOrMore = generateStatic("zeroOrMore");
+		/**
+		 * a shortcut for 'Rena().oneOrMore()'.
+		 * @param {Object} pattern a pattern to match
+		 * @param {Function} action an action to be invoked
+		 * @param {Object} init an initial attribute
+		 * @return {Rena} new instance
+		 */
 		Rena.oneOrMore = generateStatic("oneOrMore");
+		/**
+		 * a shortcut for 'Rena().delimit()'.
+		 * @param {Object} pattern a pattern to match
+		 * @param {Object} delimiter a pattern of delimiter
+		 * @param {Function} action an action to be invoked
+		 * @param {Object} init an initial attribute
+		 * @return {Rena} new instance
+		 */
 		Rena.delimit = generateStatic("delimit");
+		/**
+		 * a shortcut for 'Rena().timesArray()'.
+		 * @param {Number} countmin minimum of repetation
+		 * @param {Number} countmax maximum of repetation
+		 * @param {Object} pattern a pattern to match
+		 * @return {Rena} new instance
+		 */
+		Rena.timesArray = generateStatic("timesArray");
+		/**
+		 * a shortcut for 'Rena().atLeastArray()'.
+		 * @param {Number} count minimum of repetation
+		 * @param {Object} pattern a pattern to match
+		 * @return {Rena} new instance
+		 */
+		Rena.atLeastArray = generateStatic("atLeastArray");
+		/**
+		 * a shortcut for 'Rena().atMostArray()'.
+		 * @param {Number} count maximum of repetation
+		 * @param {Object} pattern a pattern to match
+		 * @return {Rena} new instance
+		 */
+		Rena.atMostArray = generateStatic("atMostArray");
+		/**
+		 * a shortcut for 'Rena().zeroOrMoreArray()'.
+		 * @param {Object} pattern a pattern to match
+		 * @return {Rena} new instance
+		 */
+		Rena.zeroOrMoreArray = generateStatic("zeroOrMoreArray");
+		/**
+		 * a shortcut for 'Rena().oneOrMoreArray()'.
+		 * @param {Object} pattern a pattern to match
+		 * @return {Rena} new instance
+		 */
+		Rena.oneOrMoreArray = generateStatic("oneOrMoreArray");
+		/**
+		 * a shortcut for 'Rena().delimitArray()'.
+		 * @param {Object} pattern a pattern to match
+		 * @param {Object} delimiter a pattern of delimiter
+		 * @return {Rena} new instance
+		 */
+		Rena.delimitArray = generateStatic("delimitArray");
+		/**
+		 * a shortcut for 'Rena().lookahead()'.
+		 * @param {Object} pattern a pattern to match
+		 * @param {Boolean} positive succeed when the pattern does not match if this value is falsy
+		 * @return {Rena} new instance
+		 */
 		Rena.lookahead = generateStatic("lookahead");
+		/**
+		 * a shortcut for 'Rena().lookaheadNot()'.
+		 * @param {Object} pattern a pattern to match
+		 * @return {Rena} new instance
+		 */
 		Rena.lookaheadNot = generateStatic("lookaheadNot");
+		/**
+		 * a shortcut for 'Rena().cond()'.
+		 * @param {Function} cond the condition
+		 * @return {Rena} new instance
+		 */
 		Rena.cond = generateStatic("cond");
+		/**
+		 * a shortcut for 'Rena().passAll()'.
+		 * @return {Rena} new instance
+		 */
 		Rena.passAll = generateStatic("passAll");
+		/**
+		 * a shortcut for 'Rena().attr()'.
+		 * @param {Object} attr an attribute
+		 * @return {Rena} new instance
+		 */
 		Rena.attr = generateStatic("attr");
+		/**
+		 * a shortcut for 'Rena().action()'.
+		 * @param {Object} action an action
+		 * @return {Rena} new instance
+		 */
 		Rena.action = generateStatic("action");
+		/**
+		 * a shortcut for 'Rena().key()'.
+		 * @param {String} word a keyword to be matched
+		 * @param {Trie} trie a trie tree to match
+		 * @return {Rena} new instance
+		 */
 		Rena.key = generateStatic("key");
+		/**
+		 * a shortcut for 'Rena().notKey()'.
+		 * @param {Trie} trie a trie tree to match
+		 * @return {Rena} new instance
+		 */
 		Rena.notKey = generateStatic("notKey");
 		Rena.pass = function() {};
 		/**
@@ -719,13 +1002,22 @@
 			return result;
 		};
 		/**
+		 * generates a function which accumlates value using the given method.
+		 * @param {String} method name when the value accumlates
+		 */
+		Rena.accumlate = function(method) {
+			return function(x, a, b) {
+				return b[method](a);
+			}
+		};
+		/**
 		 * a function which returns first argument.
 		 */
-		Rena.I = function(x) { return x; };
+		Rena.I = Rena.first = function(x) { return x; };
 		/**
 		 * a function which returns second argument.
 		 */
-		Rena.SK = Rena.F = function(x, y) { return y; };
+		Rena.SK = Rena.F = Rena.second = function(x, y) { return y; };
 		/**
 		 * a fixed point combinator.
 		 */
@@ -783,7 +1075,7 @@
 		return Rena;
 	};
 	RenaModule = RenaFactory();
-	/**
+	/*
 	 * clones the module.
 	 * @return {Object} a cloned module
 	 */
@@ -791,6 +1083,6 @@
 	if(typeof module !== "undefined" && module.exports) {
 		module.exports = RenaModule;
 	} else {
-		root["R"] = RenaModule;
+		root["Rena"] = root["R"] = RenaModule;
 	}
 })(this);
