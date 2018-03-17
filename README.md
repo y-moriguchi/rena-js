@@ -5,6 +5,24 @@ like arithmetic expressions and so on.
 Rena.js can also treat synthesized and inherited attributes.  
 'Rena' is an acronym of REpetation (or REcursion) Notation API.  
 
+## How to use
+
+### node.js
+Install rena.js:
+```
+npm install rena-js
+```
+
+Use module:
+```js
+var R = require('rena-js');
+```
+
+### Browser
+```html
+<script src="rena.js"></script>
+```
+
 ## Examples
 
 ### Parsing CSV texts
