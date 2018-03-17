@@ -44,3 +44,6 @@ console.log(expr.parse("1+2*3").attribute);
 // outputs 1
 console.log(ptn1.parse("4-6/2").attribute);
 ```
+
+## Document
+[A document of Rena.js is here.](http://rena.morilib.net/-_anonymous_-RenaFactory-Rena.html)
