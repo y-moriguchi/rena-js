@@ -506,12 +506,18 @@
 			 * matches one of the given patterns.
 			 * @return {Rena} this instance
 			 */
-			or: function() {
+			or: function(alternatives) {
 				var alts = [],
+					args,
 					i;
 				this._checkNoChain();
-				for(i = 0; i < arguments.length; i++) {
-					alts[i] = wrap(arguments[i]);
+				if(isArray(alternatives)) {
+					args = alternatives;
+				} else {
+					args = Array.prototype.slice.call(arguments);
+				}
+				for(i = 0; i < args.length; i++) {
+					alts[i] = wrap(args[i]);
 				}
 				this._patterns.push(new Alt(null, alts));
 				return this;
@@ -1252,6 +1258,64 @@
 				keys = Array.prototype.slice.call(arguments);
 			}
 			return new Trie(keys);
+		};
+		/**
+		 * define operator grammar.
+		 * @param {Array} settings
+		 * @return {Rena} Rena object of the operator grammar
+		 */
+		Rena.operatorGrammar = function(settings) {
+			var option,
+				grammar = [],
+				right,
+				i,
+				j;
+			if(isArray(settings)) {
+				option = settings;
+			} else {
+				option = Array.prototype.slice.call(arguments);
+			}
+			if(option.length === 0) {
+				throw new Error("at least one element required");
+			}
+			for(i = 0; i < option.length; i++) {
+				grammar[i] = new Rena();
+				if(option[i].name) {
+					grammar[option[i].name] = grammar[i];
+				}
+				
+			}
+			for(i = 0; i < option.length; i++) {
+				if(option[i].grammar) {
+					grammar[i].t(option[i].grammar(grammar));
+				} else {
+					if(i + 1 >= option.length) {
+						throw new Error("element required");
+					}
+					switch(option[i].associative) {
+					case "left":
+						right = [];
+						for(j in option[i].operators) {
+							if(option[i].operators.hasOwnProperty(j)) {
+								right.push(Rena.key(j).t(grammar[i + 1], option[i].operators[j]));
+							}
+						}
+						grammar[i].t(grammar[i + 1]).zeroOrMore(Rena.or(right));
+						break;
+					case "right":
+						for(j in option[i].operators) {
+							if(option[i].operators.hasOwnProperty(j)) {
+								right.push(Rena.key(j).t(grammar[i], option[i].operators[j]));
+							}
+						}
+						grammar[i].t(grammar[i + 1]).maybe(Rena.or(right));
+						break;
+					default:
+						throw new Error("invalid associative");
+					}
+				}
+			}
+			return grammar[0];
 		};
 		return Rena;
 	};

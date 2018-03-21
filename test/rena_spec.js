@@ -138,7 +138,8 @@ describe("Rena", function () {
 			match(Q2.equalsId("if"), "if+", "if", 2);
 		});
 		it("or", function () {
-			var ptn = R().or("string", /[0-9]+/, fntest, R("match"));
+			var ptn = R().or("string", /[0-9]+/, fntest, R("match")),
+				ptn2 = R().or(["string", /[0-9]+/, fntest, R("match")]);
 			match(ptn, "string", "string", 6);
 			match(ptn, "765", "765", 3);
 			match(ptn, "a", "a", 1);
@@ -148,6 +149,10 @@ describe("Rena", function () {
 			nomatch(R().or("string"), "a");
 			nomatch(R().or(), "string");
 			match(R.or("string"), "string", "string", 6);
+			match(ptn2, "string", "string", 6);
+			match(ptn2, "765", "765", 3);
+			match(ptn2, "a", "a", 1);
+			match(ptn2, "match", "match", 5);
 		});
 		it("matching times", function () {
 			match(R().times(2, 4, "str"), "strstr", "strstr", 6);
@@ -427,12 +432,12 @@ describe("Rena", function () {
 		});
 		it("letrec", function () {
 			var ptn1 = R.letrec(function(t, f, e) {
-					return R.t(f).maybe(R.or(
+					return R.t(f).zeroOrMore(R.or(
 						R.t("+").t(f, function(x, a, b) { return b + a; }),
 						R.t("-").t(f, function(x, a, b) { return b - a; })));
 				},
 				function(t, f, e) {
-					return R.t(e).maybe(R.or(
+					return R.t(e).zeroOrMore(R.or(
 						R.t("*").t(e, function(x, a, b) { return b * a; }),
 						R.t("/").t(e, function(x, a, b) { return b / a; })));
 				},
@@ -440,16 +445,18 @@ describe("Rena", function () {
 					return R.or(R.thenInt(/[0-9]+/), R.t("(").t(t).t(")"))
 				}).isEnd();
 			expect(ptn1.parse("1+2*3").attribute).toBe(7);
+			expect(ptn1.parse("(1+2)*3").attribute).toBe(9);
 			expect(ptn1.parse("4-6/2").attribute).toBe(1);
+			expect(ptn1.parse("1+2+3*3").attribute).toBe(12);
 		});
 		it("Yn", function () {
 			var ptn1 = R.Yn(function(t, f, e) {
-					return R.t(f).maybe(R.or(
+					return R.t(f).zeroOrMore(R.or(
 						R.t("+").t(f, function(x, a, b) { return b + a; }),
 						R.t("-").t(f, function(x, a, b) { return b - a; })));
 				},
 				function(t, f, e) {
-					return R.t(e).maybe(R.or(
+					return R.t(e).zeroOrMore(R.or(
 						R.t("*").t(e, function(x, a, b) { return b * a; }),
 						R.t("/").t(e, function(x, a, b) { return b / a; })));
 				},
@@ -457,17 +464,19 @@ describe("Rena", function () {
 					return R.or(R.thenInt(/[0-9]+/), R.t("(").t(t).t(")"))
 				}).isEnd();
 			expect(ptn1.parse("1+2*3").attribute).toBe(7);
+			expect(ptn1.parse("(1+2)*3").attribute).toBe(9);
 			expect(ptn1.parse("4-6/2").attribute).toBe(1);
+			expect(ptn1.parse("1+2+3*3").attribute).toBe(12);
 		});
 		it("ignore static", function () {
 			var Q = R.clone(),
 				ptn1 = Q.letrec(function(t, f, e) {
-					return Q.t(f).maybe(Q.or(
+					return Q.t(f).zeroOrMore(Q.or(
 						Q.t("+").t(f, function(x, a, b) { return b + a; }),
 						Q.t("-").t(f, function(x, a, b) { return b - a; })));
 				},
 				function(t, f, e) {
-					return Q.t(e).maybe(Q.or(
+					return Q.t(e).zeroOrMore(Q.or(
 						Q.t("*").t(e, function(x, a, b) { return b * a; }),
 						Q.t("/").t(e, function(x, a, b) { return b / a; })));
 				},
@@ -476,7 +485,9 @@ describe("Rena", function () {
 				}).isEnd();
 			Q.ignore(/\s+/);
 			expect(ptn1.parse(" 1  +  2  *  3  ").attribute).toBe(7);
+			expect(ptn1.parse("   (   1 + 2 ) * 3 ").attribute).toBe(9);
 			expect(ptn1.parse("  4  -  6/   2   ").attribute).toBe(1);
+			expect(ptn1.parse(" 1  +  2  + 3  *  3  ").attribute).toBe(12);
 		});
 		it("inhibited chain", function () {
 			var i;
@@ -504,6 +515,46 @@ describe("Rena", function () {
 			expect(csvparser.parse('d,"e\n""f",g').attribute).toEqual([["d","e\n\"f","g"]]);
 			expect(csvparser.parse('d').attribute).toEqual([["d"]]);
 			expect(csvparser.parse('').attribute).toEqual([]);
+		});
+		it("operatorGrammar", function () {
+			var Q = R.clone(),
+				arr,
+				ptn1,
+				ptn2;
+			arr = [{
+					name: "S",
+					associative: "left",
+					operators: {
+						"+": function(x, a, b) { return b + a; },
+						"-": function(x, a, b) { return b - a; }
+					}
+				},{
+					associative: "left",
+					operators: {
+						"*": function(x, a, b) { return b * a; },
+						"/": function(x, a, b) { return b / a; }
+					}
+				},{
+					associative: "right",
+					operators: {
+						"**": function(x, a, b) { return Math.pow(b, a); }
+					}
+				},{
+					grammar: function(g) {
+						return Q.or(Q.thenInt(/[0-9]+/), Q.key("(").t(g.S).key(")"));
+					}
+				}];
+			Q.setKey("+", "-", "*", "/", "**", "(", ")");
+			ptn1 = Q.operatorGrammar(arr);
+			ptn2 = Q.operatorGrammar.apply(null, arr);
+			expect(ptn1.parse("1+2*3").attribute).toBe(7);
+			expect(ptn1.parse("(1+2)*3").attribute).toBe(9);
+			expect(ptn1.parse("4-6/2").attribute).toBe(1);
+			expect(ptn1.parse("1+2+3*3").attribute).toBe(12);
+			expect(ptn1.parse("2*2**3").attribute).toBe(16);
+			expect(ptn1.parse("2*2**3**2").attribute).toBe(1024);
+			expect(ptn1.parse("2*(2**3)**2").attribute).toBe(128);
+			expect(ptn2.parse("(1+2)*3").attribute).toBe(9);
 		});
 	});
 });
