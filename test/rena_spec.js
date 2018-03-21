@@ -109,16 +109,33 @@ describe("Rena", function () {
 			match(R.isEnd(), "", "", 0);
 		});
 		it("equalsId", function () {
-			var Q = R.clone();
+			var Q1 = R.clone(),
+				Q2 = R.clone(),
+				Q3 = R.clone();
 			match(R().equalsId("if"), "if", "if", 2);
+			match(R().equalsId("if"), "if ", "if", 2);
 			match(R().equalsId("if"), "iff", "if", 2);
-			Q.setKey("+", "++", "-");
-			match(Q().equalsId("if"), "if", "if", 2);
-			match(Q().equalsId("if"), "if+", "if", 2);
-			match(Q().equalsId("if"), "if++", "if", 2);
-			match(Q().equalsId("if"), "if-", "if", 2);
-			nomatch(Q().equalsId("if"), "iff");
-			match(Q.equalsId("if"), "if+", "if", 2);
+			Q1.ignore(/\s+/);
+			match(Q1().equalsId("if"), "if", "if", 2);
+			match(Q1().equalsId("if"), "if ", "if ", 3);
+			nomatch(Q1().equalsId("if"), "iff");
+			nomatch(Q1().equalsId("if"), "if+");
+			Q2.setKey("+", "++", "-");
+			match(Q2().equalsId("if"), "if", "if", 2);
+			match(Q2().equalsId("if"), "if+", "if", 2);
+			match(Q2().equalsId("if"), "if++", "if", 2);
+			match(Q2().equalsId("if"), "if-", "if", 2);
+			nomatch(Q2().equalsId("if"), "if ");
+			nomatch(Q2().equalsId("if"), "iff");
+			Q3.ignore(/\s+/);
+			Q3.setKey("+", "++", "-");
+			match(Q3().equalsId("if"), "if", "if", 2);
+			match(Q3().equalsId("if"), "if ", "if ", 3);
+			match(Q3().equalsId("if"), "if+", "if", 2);
+			match(Q3().equalsId("if"), "if++", "if", 2);
+			match(Q3().equalsId("if"), "if-", "if", 2);
+			nomatch(Q3().equalsId("if"), "iff");
+			match(Q2.equalsId("if"), "if+", "if", 2);
 		});
 		it("or", function () {
 			var ptn = R().or("string", /[0-9]+/, fntest, R("match"));

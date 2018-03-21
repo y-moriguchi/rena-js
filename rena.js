@@ -150,10 +150,11 @@
 		/*
 		 * an instruction of simple match
 		 */
-		function Then(pattern, action, actionId) {
+		function Then(pattern, action, actionId, notIgnore) {
 			this.pattern = wrap(pattern);
 			this.action = action;
 			this.actionId = actionId;
+			this.notIgnore = notIgnore;
 		}
 		/*
 		 * an instruction of lookaehad
@@ -254,7 +255,9 @@
 							captures[inst.actionId].push(match);
 							precount = 1;
 						}
-						ignorePattern();
+						if(!inst.notIgnore) {
+							ignorePattern();
+						}
 					} else {
 						return null;
 					}
@@ -478,19 +481,26 @@
 				if(typeof id !== "string") {
 					throw new Error("argument must be a string");
 				}
-				return this._then(id).lookahead(function(str, index) {
+				me._patterns.push(new Then(id, undef, undef, true));
+				me.lookahead(function(str, index) {
 					var matched = {
 						match: "",
 						lastIndex: index
 					};
 					if(index === str.length) {
 						return matched;
-					} else if(!me._trie || me._trie.search(str, index).lastIndex > index) {
+					} else if(!me._ignore && !me._trie) {
+						return matched;
+					} else if(me._ignore && me._ignore(str, index)) {
+						return matched;
+					} else if(me._trie && me._trie.search(str, index).lastIndex > index) {
 						return matched;
 					} else {
 						return null;
 					}
 				});
+				me._patterns.push(new Ignore());
+				return me;
 			},
 			/**
 			 * matches one of the given patterns.
