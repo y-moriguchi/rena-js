@@ -108,7 +108,7 @@
 				};
 			} else if(pattern instanceof Rena) {
 				return function(str, index, attr) {
-					return pattern.parse(str, index, attr);
+					return pattern.parseStart(str, index, attr);
 				};
 			} else if(typeof pattern === "function") {
 				return pattern;
@@ -469,6 +469,30 @@
 				});
 			},
 			/**
+			 * matches the identifier.
+			 * @param {String} id identifier to match
+			 * @return {Rena} this instance
+			 */
+			equalsId: function(id) {
+				var me = this;
+				if(typeof id !== "string") {
+					throw new Error("argument must be a string");
+				}
+				return this._then(id).lookahead(function(str, index) {
+					var matched = {
+						match: "",
+						lastIndex: index
+					};
+					if(index === str.length) {
+						return matched;
+					} else if(!me._trie || me._trie.search(str, index).lastIndex > index) {
+						return matched;
+					} else {
+						return null;
+					}
+				});
+			},
+			/**
 			 * matches one of the given patterns.
 			 * @return {Rena} this instance
 			 */
@@ -738,17 +762,77 @@
 				return this.key("", trie);
 			},
 			/**
-			 * parses the given string.
+			 * parses the given string from the given index.
 			 * @param {String} str a string to be parsed
 			 * @param {Number} index an index to start
 			 * @param {Object} attribute an initial attribute
 			 */
-			parse: function(str, index, attribute) {
+			parseStart: function(str, index, attribute) {
 				var caps = {},
 					attr = attribute,
 					result,
 					ind = index ? index : 0;
 				return testRe(str, ind, this, 0, caps, attr);
+			},
+			/**
+			 * parses the given string partially.
+			 * @param {String} str a string to be parsed
+			 * @param {Object} attribute an initial attribute
+			 */
+			parsePart: function(str, attribute) {
+				var result,
+					i;
+				for(i = 0; i <= str.length; i++) {
+					result = this.parseStart(str, i, attribute);
+					if(result) {
+						result.startIndex = i;
+						return result;
+					}
+				}
+				return null;
+			},
+			/**
+			 * parses the given string continuously.
+			 * @param {String} str a string to be parsed
+			 * @param {Object} init an initial attribute
+			 * @param {Function} action a function to accumlate attributes
+			 * @return {Object} accumlated attribute
+			 */
+			parsePartGlobal: function(str, init, action) {
+				var result,
+					attr = init,
+					matched = false,
+					i;
+				for(i = 0; i <= str.length; i++) {
+					result = this.parseStart(str, i);
+					if(result) {
+						attr = action(result.attribute, attr);
+						i = result.lastIndex;
+						matched = true;
+					}
+				}
+				return attr;
+			},
+			/**
+			 * parses the given string continuously and accumlate to an array.
+			 * @param {String} str a string to be parsed
+			 * @return {Object} array of accumlated attribute
+			 */
+			parsePartGlobalArray: function(str) {
+				return this.parsePartGlobal(str, [], function (a, b) {
+					var result = [].concat(b);
+					result.push(a);
+					return result;
+				});
+			},
+			/**
+			 * parses the given string entirely.
+			 * @param {String} str a string to be parsed
+			 * @param {Object} attribute an initial attribute
+			 */
+			parse: function(str, attribute) {
+				var result = this.parseStart(str, 0, attribute);
+				return (result && result.lastIndex === str.length) ? result : null;
 			}
 		};
 		/*
@@ -821,6 +905,14 @@
 		 */
 		Rena.isEnd = function() {
 			return new Rena().isEnd();
+		};
+		/**
+		 * a shortcut for 'Rena().equalsId()'.
+		 * @param {String} id identifier to match
+		 * @return {Rena} new instance
+		 */
+		Rena.equalsId = function(id) {
+			return new Rena().equalsId(id);
 		};
 		/**
 		 * a shortcut for 'Rena().or()'.

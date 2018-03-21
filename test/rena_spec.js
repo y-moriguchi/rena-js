@@ -11,13 +11,13 @@
  */
 describe("Rena", function () {
 	function match(pattern, string, match, lastIndex) {
-		var result = pattern.parse(string);
+		var result = pattern.parseStart(string);
 		expect(result.match).toBe(match);
 		expect(result.lastIndex).toBe(lastIndex);
 	}
 
 	function nomatch(pattern, string) {
-		expect(pattern.parse(string)).toBeNull();
+		expect(pattern.parseStart(string)).toBeNull();
 	}
 
 	function attr(match, attr, inherit) {
@@ -108,6 +108,18 @@ describe("Rena", function () {
 			nomatch(R().then("765").isEnd(), "765961");
 			match(R.isEnd(), "", "", 0);
 		});
+		it("equalsId", function () {
+			var Q = R.clone();
+			match(R().equalsId("if"), "if", "if", 2);
+			match(R().equalsId("if"), "iff", "if", 2);
+			Q.setKey("+", "++", "-");
+			match(Q().equalsId("if"), "if", "if", 2);
+			match(Q().equalsId("if"), "if+", "if", 2);
+			match(Q().equalsId("if"), "if++", "if", 2);
+			match(Q().equalsId("if"), "if-", "if", 2);
+			nomatch(Q().equalsId("if"), "iff");
+			match(Q.equalsId("if"), "if+", "if", 2);
+		});
 		it("or", function () {
 			var ptn = R().or("string", /[0-9]+/, fntest, R("match"));
 			match(ptn, "string", "string", 6);
@@ -144,7 +156,7 @@ describe("Rena", function () {
 			var ptn1 = R().times(1, -1, R.then(/[a-z]/, R.I), function(x, a, b) { return a + b; }, ""),
 				ptn3 = R.times(1, 3, R.then(/[a-z]/, R.I), function(x, a, b) { return a + b; }, "");
 			expect(ptn1.parse("string").attribute).toBe("gnirts");
-			expect(ptn3.parse("string").attribute).toBe("rts");
+			expect(ptn3.parseStart("string").attribute).toBe("rts");
 			expect(ptn3.parse("str").attribute).toBe("rts");
 			expect(ptn3.parse("st").attribute).toBe("ts");
 			expect(ptn3.parse("s").attribute).toBe("s");
@@ -168,12 +180,12 @@ describe("Rena", function () {
 			match(R().atMost(4, "str"), "strstrstr", "strstrstr", 9);
 			match(R().atMost(4, "str"), "strstrstrstr", "strstrstrstr", 12);
 			match(R().atMost(4, "str"), "strstrstrstrstr", "strstrstrstr", 12);
-			expect(ptn1.parse("string").attribute).toBe("rts");
+			expect(ptn1.parseStart("string").attribute).toBe("rts");
 			expect(ptn1.parse("str").attribute).toBe("rts");
 			expect(ptn1.parse("st").attribute).toBe("ts");
 			expect(ptn1.parse("s").attribute).toBe("s");
 			expect(ptn1.parse("").attribute).toBe("");
-			expect(ptn2.parse("string").attribute).toBe("rts");
+			expect(ptn2.parseStart("string").attribute).toBe("rts");
 			match(R.atMost(4, "str"), "strstrstrstrstr", "strstrstrstr", 12);
 		});
 		it("maybe", function () {
@@ -184,7 +196,7 @@ describe("Rena", function () {
 			match(R.maybe("string"), "string", "string", 6);
 			R().maybe("string", attr("string")).parse("string");
 			expect(R().maybe("string", R.I).parse("string").attribute).toBe("string");
-			expect(R().maybe("string", R.I).parse("strin").attribute).toBe(undefined);
+			expect(R().maybe("string", R.I).parseStart("strin").attribute).toBe(undefined);
 			expect(R.maybe("string", R.I).parse("string").attribute).toBe("string");
 		});
 		it("oneOrMore", function () {
@@ -237,7 +249,7 @@ describe("Rena", function () {
 		it("atMostArray", function () {
 			var ptn1 = R().atMostArray(3, R.then(/[a-z]/, R.I)),
 				ptn2 = R.atMostArray(3, R.then(/[a-z]/, R.I));
-			expect(ptn1.parse("stri").attribute).toEqual(["s", "t", "r"]);
+			expect(ptn1.parseStart("stri").attribute).toEqual(["s", "t", "r"]);
 			expect(ptn1.parse("str").attribute).toEqual(["s", "t", "r"]);
 			expect(ptn1.parse("s").attribute).toEqual(["s"]);
 			expect(ptn1.parse("").attribute).toEqual([]);
@@ -347,9 +359,36 @@ describe("Rena", function () {
 			nomatch(Q().notKey(), "*");
 			match(R.notKey(trie), "/", "", 0);
 		});
+		it("parseStart", function () {
+			expect(R.then("765").parseStart("961765", 3).match).toBe("765");
+			expect(R.cond(function(x) { return x === 765; }).parseStart("", 0, 765).match).toBe("");
+		});
 		it("parse", function () {
-			expect(R.then("765").parse("961765", 3).match).toBe("765");
-			expect(R.cond(function(x) { return x === 765; }).parse("", 0, 765).match).toBe("");
+			expect(R.then("765").parse("765").match).toBe("765");
+			expect(R.then("765").parse("765961")).toBeFalsy();
+			expect(R.cond(function(x) { return x === 765; }).parse("", 765).match).toBe("");
+		});
+		it("parsePart", function () {
+			expect(R.then("765").parsePart("765").match).toBe("765");
+			expect(R.then("765").parsePart("765").startIndex).toBe(0);
+			expect(R.then("765").parsePart("765346").match).toBe("765");
+			expect(R.then("765").parsePart("765346").startIndex).toBe(0);
+			expect(R.then("765").parsePart("876765346").match).toBe("765");
+			expect(R.then("765").parsePart("876765346").startIndex).toBe(3);
+			expect(R.then("765").parsePart("961")).toBeFalsy();
+			expect(R.cond(function(x) { return x === 765; }).parsePart("", 765).match).toBe("");
+		});
+		it("parsePartGlobal", function () {
+			expect(R.then(/[0-9]+/, R.I).parsePartGlobal("765x876xx346xxx", "", function (a, b) { return b + a; })).toBe("765876346");
+			expect(R.then(/[0-9]+/, R.I).parsePartGlobal("xxx765x876xx346", "", function (a, b) { return b + a; })).toBe("765876346");
+			expect(R.then(/[0-9]+/, R.I).parsePartGlobal("xxx", "", function (a, b) { return b + a; })).toBe("");
+			expect(R.then(/[0-9]+/, R.I).parsePartGlobal("", "", function (a, b) { return b + a; })).toBe("");
+		});
+		it("parsePartGlobalArray", function () {
+			expect(R.then(/[0-9]+/, R.I).parsePartGlobalArray("765x876xx346xxx")).toEqual(["765", "876", "346"]);
+			expect(R.then(/[0-9]+/, R.I).parsePartGlobalArray("xxx765x876xx346")).toEqual(["765", "876", "346"]);
+			expect(R.then(/[0-9]+/, R.I).parsePartGlobalArray("xxx")).toEqual([]);
+			expect(R.then(/[0-9]+/, R.I).parsePartGlobalArray("")).toEqual([]);
 		});
 		it("I", function () {
 			expect(R.I(1)).toBe(1);
@@ -403,7 +442,7 @@ describe("Rena", function () {
 			expect(ptn1.parse("1+2*3").attribute).toBe(7);
 			expect(ptn1.parse("4-6/2").attribute).toBe(1);
 		});
-		it("ignore", function () {
+		it("ignore static", function () {
 			var Q = R.clone(),
 				ptn1 = Q.letrec(function(t, f, e) {
 					return Q.t(f).maybe(Q.or(
@@ -426,7 +465,7 @@ describe("Rena", function () {
 			var i;
 			for(i in R) {
 				if(R.prototype.hasOwnProperty(i)) {
-					if(i !== "br" && i !== "isEnd") {
+					if(i !== "br" && i !== "isEnd" && i !== "equalsId") {
 						expect(function() { (R().times(0, 1, "str"))[i]().parse("a"); }).toThrow();
 						expect(function() { (R().maybe("str"))[i]().parse("a"); }).toThrow();
 						expect(function() { (R().atLeast(1, "str"))[i]().parse("a"); }).toThrow();
