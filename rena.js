@@ -362,23 +362,23 @@
 		 * this call is equivalent to Rena.then(pattern, match).
 		 * @constructor
 		 * @param {Object} pattern a pattern to match
-		 * @param {Object} action an action 
+		 * @param {Function} action an action(call as method)
+		 * @param {Object} ignore a pattern to ignore(constructor)
 		 */
-		function Rena(pattern, action) {
+		function Rena(pattern, action, ignore) {
 			var res;
 			if(!(this instanceof Rena)) {
-				res = new Rena();
-				if(pattern !== undef) {
-					res.then(pattern, action);
-				}
-				return res;
+				return new Rena(pattern, action, ignore);
 			}
 			this._patterns = [];
-			this._ignore = Rena._ignore;
+			this._ignore = ignore === undef ? Rena._ignore : ignore;
 			this._trie = Rena._trie;
 			this._noChain = false;
 			if(this._ignore) {
 				this._patterns.push(new Ignore());
+			}
+			if(pattern !== undef) {
+				this.then(pattern, action);
 			}
 		}
 		Rena.prototype = {
@@ -1135,11 +1135,20 @@
 		/**
 		 * sets the pattern to be ignored.
 		 * @param {Object} pattern a pattern to be ignored
+		 * @param {RenaModule} this Rena module
+		 */
+		Rena.ignoreDefault = function(pattern) {
+			Rena._ignore = pattern ? wrap(pattern) : null;
+			return Rena;
+		};
+		Rena.ignoreDefault(null);
+		/**
+		 * sets the pattern to be ignored locally.
+		 * @param {Object} pattern a pattern to be ignored
 		 */
 		Rena.ignore = function(pattern) {
-			Rena._ignore = pattern ? wrap(pattern) : null;
+			return new Rena(undef, undef, pattern);
 		};
-		Rena.ignore(null);
 		/**
 		 * sets the keywords.
 		 */

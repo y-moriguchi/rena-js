@@ -115,7 +115,7 @@ describe("Rena", function () {
 			match(R().equalsId("if"), "if", "if", 2);
 			match(R().equalsId("if"), "if ", "if", 2);
 			match(R().equalsId("if"), "iff", "if", 2);
-			Q1.ignore(/\s+/);
+			Q1.ignoreDefault(/\s+/);
 			match(Q1().equalsId("if"), "if", "if", 2);
 			match(Q1().equalsId("if"), "if ", "if ", 3);
 			nomatch(Q1().equalsId("if"), "iff");
@@ -127,7 +127,7 @@ describe("Rena", function () {
 			match(Q2().equalsId("if"), "if-", "if", 2);
 			nomatch(Q2().equalsId("if"), "if ");
 			nomatch(Q2().equalsId("if"), "iff");
-			Q3.ignore(/\s+/);
+			Q3.ignoreDefault(/\s+/);
 			Q3.setKey("+", "++", "-");
 			match(Q3().equalsId("if"), "if", "if", 2);
 			match(Q3().equalsId("if"), "if ", "if ", 3);
@@ -468,8 +468,8 @@ describe("Rena", function () {
 			expect(ptn1.parse("4-6/2").attribute).toBe(1);
 			expect(ptn1.parse("1+2+3*3").attribute).toBe(12);
 		});
-		it("ignore static", function () {
-			var Q = R.clone(),
+		it("ignoreDefault", function () {
+			var Q = R.clone().ignoreDefault(/\s+/),
 				ptn1 = Q.letrec(function(t, f, e) {
 					return Q.t(f).zeroOrMore(Q.or(
 						Q.t("+").t(f, function(x, a, b) { return b + a; }),
@@ -483,11 +483,17 @@ describe("Rena", function () {
 				function(t, f, e) {
 					return Q.or(Q.thenInt(/[0-9]+/), Q.t("(").t(t).t(")"))
 				}).isEnd();
-			Q.ignore(/\s+/);
 			expect(ptn1.parse(" 1  +  2  *  3  ").attribute).toBe(7);
 			expect(ptn1.parse("   (   1 + 2 ) * 3 ").attribute).toBe(9);
 			expect(ptn1.parse("  4  -  6/   2   ").attribute).toBe(1);
 			expect(ptn1.parse(" 1  +  2  + 3  *  3  ").attribute).toBe(12);
+		});
+		it("ignore", function () {
+			var Q = R.clone().ignoreDefault(/\s+/),
+				ptn1 = Q.ignore(null).t(/[a-z]+/),
+				ptn2 = Q.t(/[a-z]+/);
+			match(ptn1, "xyz   ", "xyz", 3);
+			match(ptn2, "xyz   ", "xyz   ", 6);
 		});
 		it("inhibited chain", function () {
 			var i;
