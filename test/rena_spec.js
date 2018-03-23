@@ -599,6 +599,7 @@ describe("Rena", function () {
 			expect(ptn1.parse("2+-@1+@3").attribute).toBe(4);
 			expect(ptn1.parse("not1+2*3").attribute).toBe(0);
 			expect(ptn1.parse("not-6+2*3").attribute).toBe(1);
+			expect(ptn1.parse("-(not-6+2*3)").attribute).toBe(-1);
 			expect(ptn1.parse("not@-1").attribute).toBe(1);
 			expect(ptn1.parse("(not1)+2*3").attribute).toBe(6);
 			expect(ptn1.parse("4!").attribute).toBe(24);
@@ -609,6 +610,7 @@ describe("Rena", function () {
 			expect(ptn1.parse("(4+3)!").attribute).toBe(5040);
 			expect(ptn1.parse("1+2*3?").attribute).toBe(1);
 			expect(ptn1.parse("4+3!?").attribute).toBe(1);
+			expect(ptn1.parse("(4+3?)!").attribute).toBe(1);
 			expect(ptn1.parse("1+2*(3?)").attribute).toBe(3);
 			expect(ptn2.parse("(1+2)*3").attribute).toBe(9);
 		});
