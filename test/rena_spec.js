@@ -529,30 +529,62 @@ describe("Rena", function () {
 				ptn2;
 			arr = [{
 					name: "S",
-					associative: "left",
+					associative: "pre",
 					operators: {
-						"+": function(x, a, b) { return b + a; },
-						"-": function(x, a, b) { return b - a; }
+						"not": function(a) { return a ? 0 : 1; }
+					}
+				},{
+					associative: "post",
+					operators: {
+						"?": function(a) { return a ? 1 : 0; }
 					}
 				},{
 					associative: "left",
 					operators: {
-						"*": function(x, a, b) { return b * a; },
-						"/": function(x, a, b) { return b / a; }
+						"+": function(b, a) { return b + a; },
+						"-": function(b, a) { return b - a; }
+					}
+				},{
+					associative: "left",
+					operators: {
+						"*": function(b, a) { return b * a; },
+						"/": function(b, a) { return b / a; }
 					}
 				},{
 					associative: "right",
 					operators: {
-						"**": function(x, a, b) { return Math.pow(b, a); }
+						"**": function(b, a) { return Math.pow(b, a); }
+					}
+				},{
+					associative: "pre",
+					operators: {
+						"-": function(a) { return -a; },
+						"@": function(a) { return a + 1; }
+					}
+				},{
+					associative: "post",
+					operators: {
+						"!": function(a) {
+							var i = a - 1,
+								res = a;
+							for(; i > 1; i--) {
+								res *= i;
+							}
+							return res;
+						},
+						"@": function(a) { return a - 1; }
 					}
 				},{
 					grammar: function(g) {
 						return Q.or(Q.thenInt(/[0-9]+/), Q.key("(").t(g.S).key(")"));
 					}
 				}];
-			Q.setKey("+", "-", "*", "/", "**", "(", ")");
+			Q.setKey("+", "-", "*", "/", "**", "(", ")", "@", "not", "!", "?");
 			ptn1 = Q.operatorGrammar(arr);
 			ptn2 = Q.operatorGrammar.apply(null, arr);
+			expect(ptn1.parse("1").attribute).toBe(1);
+			expect(ptn1.parse("1+2").attribute).toBe(3);
+			expect(ptn1.parse("1+2+3+4+5+6+7+8+9+10").attribute).toBe(55);
 			expect(ptn1.parse("1+2*3").attribute).toBe(7);
 			expect(ptn1.parse("(1+2)*3").attribute).toBe(9);
 			expect(ptn1.parse("4-6/2").attribute).toBe(1);
@@ -560,6 +592,24 @@ describe("Rena", function () {
 			expect(ptn1.parse("2*2**3").attribute).toBe(16);
 			expect(ptn1.parse("2*2**3**2").attribute).toBe(1024);
 			expect(ptn1.parse("2*(2**3)**2").attribute).toBe(128);
+			expect(ptn1.parse("(1+2)*3").attribute).toBe(9);
+			expect(ptn1.parse("-1").attribute).toBe(-1);
+			expect(ptn1.parse("--1").attribute).toBe(1);
+			expect(ptn1.parse("-@1").attribute).toBe(-2);
+			expect(ptn1.parse("2+-@1+@3").attribute).toBe(4);
+			expect(ptn1.parse("not1+2*3").attribute).toBe(0);
+			expect(ptn1.parse("not-6+2*3").attribute).toBe(1);
+			expect(ptn1.parse("not@-1").attribute).toBe(1);
+			expect(ptn1.parse("(not1)+2*3").attribute).toBe(6);
+			expect(ptn1.parse("4!").attribute).toBe(24);
+			expect(ptn1.parse("4@!").attribute).toBe(6);
+			expect(ptn1.parse("4@@@@").attribute).toBe(0);
+			expect(ptn1.parse("not4@@@@").attribute).toBe(1);
+			expect(ptn1.parse("4+3!").attribute).toBe(10);
+			expect(ptn1.parse("(4+3)!").attribute).toBe(5040);
+			expect(ptn1.parse("1+2*3?").attribute).toBe(1);
+			expect(ptn1.parse("4+3!?").attribute).toBe(1);
+			expect(ptn1.parse("1+2*(3?)").attribute).toBe(3);
 			expect(ptn2.parse("(1+2)*3").attribute).toBe(9);
 		});
 	});

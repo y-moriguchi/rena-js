@@ -1276,9 +1276,45 @@
 		Rena.operatorGrammar = function(settings) {
 			var option,
 				grammar = [],
-				right,
-				i,
-				j;
+				i;
+			function repeatGrammar(i, iNext) {
+				var j,
+					right = [];
+				for(j in option[i].operators) {
+					if(option[i].operators.hasOwnProperty(j)) {
+						right.push(Rena.key(j).t(grammar[iNext], (function(j) {
+							return function(x, a, b) {
+								return option[i].operators[j](b, a);
+							};
+						})(j)));
+					}
+				}
+				return right;
+			}
+			function repeatGrammarPre(i) {
+				var j,
+					right = [];
+				for(j in option[i].operators) {
+					if(option[i].operators.hasOwnProperty(j)) {
+						right.push(Rena.key(j).t(grammar[i], (function(j) {
+							return function(x, a, b) {
+								return option[i].operators[j](a);
+							}
+						})(j)));
+					}
+				}
+				return right;
+			}
+			function repeatGrammarPost(i) {
+				var j,
+					right = [];
+				for(j in option[i].operators) {
+					if(option[i].operators.hasOwnProperty(j)) {
+						right.push(Rena.key(j).action(option[i].operators[j]));
+					}
+				}
+				return right;
+			}
 			if(isArray(settings)) {
 				option = settings;
 			} else {
@@ -1303,21 +1339,16 @@
 					}
 					switch(option[i].associative) {
 					case "left":
-						right = [];
-						for(j in option[i].operators) {
-							if(option[i].operators.hasOwnProperty(j)) {
-								right.push(Rena.key(j).t(grammar[i + 1], option[i].operators[j]));
-							}
-						}
-						grammar[i].t(grammar[i + 1]).zeroOrMore(Rena.or(right));
+						grammar[i].t(grammar[i + 1]).zeroOrMore(Rena.or(repeatGrammar(i, i + 1)));
 						break;
 					case "right":
-						for(j in option[i].operators) {
-							if(option[i].operators.hasOwnProperty(j)) {
-								right.push(Rena.key(j).t(grammar[i], option[i].operators[j]));
-							}
-						}
-						grammar[i].t(grammar[i + 1]).maybe(Rena.or(right));
+						grammar[i].t(grammar[i + 1]).maybe(Rena.or(repeatGrammar(i, i)));
+						break;
+					case "pre":
+						grammar[i].or(Rena.or(repeatGrammarPre(i)), grammar[i + 1]);
+						break;
+					case "post":
+						grammar[i].t(grammar[i + 1]).zeroOrMore(Rena.or(repeatGrammarPost(i)));
 						break;
 					default:
 						throw new Error("invalid associative");
