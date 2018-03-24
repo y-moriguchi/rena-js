@@ -503,6 +503,16 @@
 				return me;
 			},
 			/**
+			 * matches a float number and sets the number as an attribute.
+			 * @param {Boolean} signum matches sign if signum is true
+			 * @return {Rean} this instance
+			 */
+			real: function(signum) {
+				var nosign = /(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)(?:[eE][\+\-]?[0-9]+)?/,
+					withsign = /[\+\-]?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)(?:[eE][\+\-]?[0-9]+)?/;
+				return this.thenFloat(signum ? withsign : nosign);
+			},
+			/**
 			 * matches one of the given patterns.
 			 * @return {Rena} this instance
 			 */
@@ -929,6 +939,14 @@
 		 */
 		Rena.equalsId = function(id) {
 			return new Rena().equalsId(id);
+		};
+		/**
+		 * a shortcut for 'Rena().real()'.
+		 * @param {Boolean} signum matches sign if signum is true
+		 * @return {Rena} new instance
+		 */
+		Rena.real = function(signum) {
+			return new Rena().real(signum);
 		};
 		/**
 		 * a shortcut for 'Rena().or()'.
