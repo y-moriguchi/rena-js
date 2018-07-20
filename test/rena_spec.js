@@ -221,104 +221,117 @@ describe("Rena", function () {
 			match(ptn2, "a", "a", 1);
 			match(ptn2, "match", "match", 5);
 		});
-		it("matching times", function () {
-			match(R().times(2, 4, "str"), "strstr", "strstr", 6);
-			match(R().times(2, 4, "str"), "strstrstr", "strstrstr", 9);
-			match(R().times(2, 4, "str"), "strstrstrstr", "strstrstrstr", 12);
-			match(R().times(2, 4, "str"), "strstrstrstrstr", "strstrstrstr", 12);
-			nomatch(R().times(2, 4, "str"), "str");
-			match(R().times(2, 2, "str"), "strstr", "strstr", 6);
-			match(R().times(2, 2, "str"), "strstrstr", "strstr", 6);
-			nomatch(R().times(2, 2, "str"), "str");
-			match(R().times(0, 1, "str"), "str", "str", 3);
-			match(R().times(0, 1, "str"), "", "", 0);
-			match(R().times(0, 1, "str"), "strstr", "str", 3);
-			match(R().times(2, -1, "str"), "strstr", "strstr", 6);
-			match(R().times(2, -1, "str"), "strstrstrstrstr", "strstrstrstrstr", 15);
-			nomatch(R().times(2, -1, "str"), "str");
-			expect(function() { R().times(-1, 1, "str").parse("a"); }).toThrow();
-			expect(function() { R().times(0, 0, "str").parse("a"); }).toThrow();
-			expect(function() { R().times(1, 0, "str").parse("a"); }).toThrow();
+		it("matching thenTimes", function () {
+			match(R().thenTimes(2, 4, "str"), "strstr", "strstr", 6);
+			match(R().thenTimes(2, 4, "str"), "strstrstr", "strstrstr", 9);
+			match(R().thenTimes(2, 4, "str"), "strstrstrstr", "strstrstrstr", 12);
+			match(R().thenTimes(2, 4, "str"), "strstrstrstrstr", "strstrstrstr", 12);
+			nomatch(R().thenTimes(2, 4, "str"), "str");
+			match(R().thenTimes(2, 2, "str"), "strstr", "strstr", 6);
+			match(R().thenTimes(2, 2, "str"), "strstrstr", "strstr", 6);
+			nomatch(R().thenTimes(2, 2, "str"), "str");
+			match(R().thenTimes(0, 1, "str"), "str", "str", 3);
+			match(R().thenTimes(0, 1, "str"), "", "", 0);
+			match(R().thenTimes(0, 1, "str"), "strstr", "str", 3);
+			match(R().thenTimes(2, -1, "str"), "strstr", "strstr", 6);
+			match(R().thenTimes(2, -1, "str"), "strstrstrstrstr", "strstrstrstrstr", 15);
+			nomatch(R().thenTimes(2, -1, "str"), "str");
+			expect(function() { R().thenTimes(-1, 1, "str").parse("a"); }).toThrow();
+			expect(function() { R().thenTimes(0, 0, "str").parse("a"); }).toThrow();
+			expect(function() { R().thenTimes(1, 0, "str").parse("a"); }).toThrow();
 			match(R.times(2, 4, "str"), "strstr", "strstr", 6);
 		});
-		it("attribute of times", function () {
-			var ptn1 = R().times(1, -1, R.then(/[a-z]/, R.I), function(x, a, b) { return a + b; }, ""),
+		it("attribute of thenTimes", function () {
+			var ptn1 = R().thenTimes(1, -1, R.then(/[a-z]/, R.I), function(x, a, b) { return a + b; }, ""),
 				ptn3 = R.times(1, 3, R.then(/[a-z]/, R.I), function(x, a, b) { return a + b; }, "");
+				ptn4 = R.then(/[a-z]/, R.I).times(1, 3, function(x, a, b) { return a + b; }, "");
 			expect(ptn1.parse("string").attribute).toBe("gnirts");
 			expect(ptn3.parseStart("string").attribute).toBe("rts");
 			expect(ptn3.parse("str").attribute).toBe("rts");
 			expect(ptn3.parse("st").attribute).toBe("ts");
 			expect(ptn3.parse("s").attribute).toBe("s");
+			expect(ptn4.parseStart("string").attribute).toBe("rts");
 		});
-		it("atLeast", function () {
-			var ptn1 = R().atLeast(1, R.then(/[a-z]/, R.I), function(x, a, b) { return a + b; }, ""),
-				ptn2 = R.atLeast(1, R.then(/[a-z]/, R.I), function(x, a, b) { return a + b; }, "");
-			match(R().atLeast(2, "str"), "strstr", "strstr", 6);
-			match(R().atLeast(2, "str"), "strstrstrstrstr", "strstrstrstrstr", 15);
-			nomatch(R().atLeast(2, "str"), "str");
-			expect(function() { R().atLeast(-1, "str").parse("a"); }).toThrow();
+		it("thenAtLeast", function () {
+			var ptn1 = R().thenAtLeast(1, R.then(/[a-z]/, R.I), function(x, a, b) { return a + b; }, ""),
+				ptn2 = R.atLeast(1, R.then(/[a-z]/, R.I), function(x, a, b) { return a + b; }, ""),
+				ptn3 = R.then(/[a-z]/, R.I).atLeast(1, function(x, a, b) { return a + b; }, "");
+			match(R().thenAtLeast(2, "str"), "strstr", "strstr", 6);
+			match(R().thenAtLeast(2, "str"), "strstrstrstrstr", "strstrstrstrstr", 15);
+			nomatch(R().thenAtLeast(2, "str"), "str");
+			expect(function() { R().thenAtLeast(-1, "str").parse("a"); }).toThrow();
 			expect(ptn1.parse("string").attribute).toBe("gnirts");
 			expect(ptn2.parse("string").attribute).toBe("gnirts");
+			expect(ptn3.parse("string").attribute).toBe("gnirts");
 		});
-		it("atMost", function () {
-			var ptn1 = R().atMost(3, R.then(/[a-z]/, R.I), function(x, a, b) { return a + b; }, ""),
+		it("thenAtMost", function () {
+			var ptn1 = R().thenAtMost(3, R.then(/[a-z]/, R.I), function(x, a, b) { return a + b; }, ""),
 				ptn2 = R.atMost(3, R.then(/[a-z]/, R.I), function(x, a, b) { return a + b; }, "");
-			match(R().atMost(4, "str"), "", "", 0);
-			match(R().atMost(4, "str"), "str", "str", 3);
-			match(R().atMost(4, "str"), "strstr", "strstr", 6);
-			match(R().atMost(4, "str"), "strstrstr", "strstrstr", 9);
-			match(R().atMost(4, "str"), "strstrstrstr", "strstrstrstr", 12);
-			match(R().atMost(4, "str"), "strstrstrstrstr", "strstrstrstr", 12);
+				ptn3 = R.then(/[a-z]/, R.I).atMost(3, function(x, a, b) { return a + b; }, "");
+			match(R().thenAtMost(4, "str"), "", "", 0);
+			match(R().thenAtMost(4, "str"), "str", "str", 3);
+			match(R().thenAtMost(4, "str"), "strstr", "strstr", 6);
+			match(R().thenAtMost(4, "str"), "strstrstr", "strstrstr", 9);
+			match(R().thenAtMost(4, "str"), "strstrstrstr", "strstrstrstr", 12);
+			match(R().thenAtMost(4, "str"), "strstrstrstrstr", "strstrstrstr", 12);
 			expect(ptn1.parseStart("string").attribute).toBe("rts");
 			expect(ptn1.parse("str").attribute).toBe("rts");
 			expect(ptn1.parse("st").attribute).toBe("ts");
 			expect(ptn1.parse("s").attribute).toBe("s");
 			expect(ptn1.parse("").attribute).toBe("");
 			expect(ptn2.parseStart("string").attribute).toBe("rts");
+			expect(ptn3.parseStart("string").attribute).toBe("rts");
 			match(R.atMost(4, "str"), "strstrstrstrstr", "strstrstrstr", 12);
 		});
-		it("maybe", function () {
-			match(R().maybe("string"), "string", "string", 6);
-			match(R().maybe("string"), "strings", "string", 6);
-			match(R().maybe("string"), "strin", "", 0);
-			match(R().maybe("string"), "stringstring", "string", 6);
+		it("thenMaybe", function () {
+			match(R().thenMaybe("string"), "string", "string", 6);
+			match(R().thenMaybe("string"), "strings", "string", 6);
+			match(R().thenMaybe("string"), "strin", "", 0);
+			match(R().thenMaybe("string"), "stringstring", "string", 6);
 			match(R.maybe("string"), "string", "string", 6);
-			R().maybe("string", attr("string")).parse("string");
-			expect(R().maybe("string", R.I).parse("string").attribute).toBe("string");
-			expect(R().maybe("string", R.I).parseStart("strin").attribute).toBe(undefined);
+			R().thenMaybe("string", attr("string")).parse("string");
+			expect(R().thenMaybe("string", R.I).parse("string").attribute).toBe("string");
+			expect(R().thenMaybe("string", R.I).parseStart("strin").attribute).toBe(undefined);
 			expect(R.maybe("string", R.I).parse("string").attribute).toBe("string");
+			expect(R.then("string", R.I).maybe().parse("string").attribute).toBe("string");
 		});
-		it("oneOrMore", function () {
-			var ptn1 = R().oneOrMore(R.then(/[a-z]/, R.I), function(x, a, b) { return a + b; }, ""),
-				ptn2 = R.oneOrMore(R.then(/[a-z]/, R.I), function(x, a, b) { return a + b; }, "");
-			match(R().oneOrMore("str"), "str", "str", 3);
-			match(R().oneOrMore("str"), "strstrstrstrstr", "strstrstrstrstr", 15);
-			nomatch(R().oneOrMore("str"), "");
+		it("thenOneOrMore", function () {
+			var ptn1 = R().thenOneOrMore(R.then(/[a-z]/, R.I), function(x, a, b) { return a + b; }, ""),
+				ptn2 = R.oneOrMore(R.then(/[a-z]/, R.I), function(x, a, b) { return a + b; }, ""),
+				ptn3 = R.then(/[a-z]/, R.I).oneOrMore(function(x, a, b) { return a + b; }, "");
+			match(R().thenOneOrMore("str"), "str", "str", 3);
+			match(R().thenOneOrMore("str"), "strstrstrstrstr", "strstrstrstrstr", 15);
+			nomatch(R().thenOneOrMore("str"), "");
 			expect(ptn1.parse("string").attribute).toBe("gnirts");
 			expect(ptn2.parse("string").attribute).toBe("gnirts");
+			expect(ptn3.parse("string").attribute).toBe("gnirts");
 			match(R.oneOrMore("str"), "str", "str", 3);
 		});
-		it("zeroOrMore", function () {
-			var ptn1 = R().zeroOrMore(R.then(/[a-z]/, R.I), function(x, a, b) { return a + b; }, ""),
-				ptn2 = R().zeroOrMore(R.then(/[a-z]/, R.I), function(x, a, b) { return a + b; }, "");
-			match(R().zeroOrMore("str"), "", "", 0);
-			match(R().zeroOrMore("str"), "str", "str", 3);
-			match(R().zeroOrMore("str"), "strstrstrstrstr", "strstrstrstrstr", 15);
+		it("thenZeroOrMore", function () {
+			var ptn1 = R().thenZeroOrMore(R.then(/[a-z]/, R.I), function(x, a, b) { return a + b; }, ""),
+				ptn2 = R.zeroOrMore(R.then(/[a-z]/, R.I), function(x, a, b) { return a + b; }, ""),
+				ptn3 = R.then(/[a-z]/, R.I).zeroOrMore(function(x, a, b) { return a + b; }, "");
+			match(R().thenZeroOrMore("str"), "", "", 0);
+			match(R().thenZeroOrMore("str"), "str", "str", 3);
+			match(R().thenZeroOrMore("str"), "strstrstrstrstr", "strstrstrstrstr", 15);
 			expect(ptn1.parse("string").attribute).toBe("gnirts");
 			expect(ptn2.parse("string").attribute).toBe("gnirts");
+			expect(ptn3.parse("string").attribute).toBe("gnirts");
 			match(R.zeroOrMore("str"), "str", "str", 3);
 		});
-		it("delimit", function () {
-			var ptn1 = R().delimit(R.then(/[0-9]+/, R.I), "+", function(x, a, b) { return a + b; }, ""),
-				ptn2 = R.delimit(R.then(/[0-9]+/, R.I), "+", function(x, a, b) { return a + b; }, "");
-			match(R().delimit(/[0-9]+/, "+"), "7", "7", 1);
-			match(R().delimit(/[0-9]+/, "+"), "7+65", "7+65", 4);
-			match(R().delimit(/[0-9]+/, "+"), "7+", "7", 1);
-			nomatch(R().delimit(/[0-9]+/, "+"), "");
-			nomatch(R().delimit(/[0-9]+/, "+"), "a+7");
-			nomatch(R().delimit(/[0-9]+/, "+"), "+961");
+		it("thenDelimit", function () {
+			var ptn1 = R().thenDelimit(R.then(/[0-9]+/, R.I), "+", function(x, a, b) { return a + b; }, ""),
+				ptn2 = R.delimit(R.then(/[0-9]+/, R.I), "+", function(x, a, b) { return a + b; }, ""),
+				ptn3 = R.then(/[0-9]+/, R.I).delimit("+", function(x, a, b) { return a + b; }, "");
+			match(R().thenDelimit(/[0-9]+/, "+"), "7", "7", 1);
+			match(R().thenDelimit(/[0-9]+/, "+"), "7+65", "7+65", 4);
+			match(R().thenDelimit(/[0-9]+/, "+"), "7+", "7", 1);
+			nomatch(R().thenDelimit(/[0-9]+/, "+"), "");
+			nomatch(R().thenDelimit(/[0-9]+/, "+"), "a+7");
+			nomatch(R().thenDelimit(/[0-9]+/, "+"), "+961");
 			expect(ptn1.parse("765+346+876").attribute).toBe("876346765");
 			expect(ptn2.parse("765+346+876").attribute).toBe("876346765");
+			expect(ptn3.parse("765+346+876").attribute).toBe("876346765");
 			match(R.delimit(/[0-9]+/, "+"), "7+65", "7+65", 4);
 		});
 		it("timesArray", function () {
@@ -398,8 +411,8 @@ describe("Rena", function () {
 			match(R.cond(function() { return true; }).then(/[0-9]+/), "765", "765", 3);
 		});
 		it("passAll", function () {
-			var ptn1 = R().passAll().atMost(3, R.then(/[a-z]/, R.I), function(x, a, b) { return a + b; }, ""),
-				ptn2 = R.passAll().atMost(3, R.then(/[a-z]/, R.I), function(x, a, b) { return a + b; }, "");
+			var ptn1 = R().passAll().thenAtMost(3, R.then(/[a-z]/, R.I), function(x, a, b) { return a + b; }, ""),
+				ptn2 = R.passAll().thenAtMost(3, R.then(/[a-z]/, R.I), function(x, a, b) { return a + b; }, "");
 			expect(ptn1.parse("str").attribute).toBe(undefined);
 			expect(ptn2.parse("str").attribute).toBe(undefined);
 			expect(R().passAll().thenInt(/[0-9]+/).parse("765").attribute).toBe(undefined);
@@ -407,8 +420,8 @@ describe("Rena", function () {
 			expect(R().passAll().action(function() { return "x"; }).parse("").attribute).toBe(undefined);
 		});
 		it("attr", function () {
-			var ptn1 = R().attr("z").zeroOrMore(R.then(/[a-z]/, R.I), function(x, a, b) { return a + b; }),
-				ptn2 = R.attr("z").zeroOrMore(R.then(/[a-z]/, R.I), function(x, a, b) { return a + b; });
+			var ptn1 = R().attr("z").thenZeroOrMore(R.then(/[a-z]/, R.I), function(x, a, b) { return a + b; }),
+				ptn2 = R.attr("z").thenZeroOrMore(R.then(/[a-z]/, R.I), function(x, a, b) { return a + b; });
 			expect(R().attr("z").then(/[0-9]+/, function(x, a, b) { return b + x; }).parse("765").attribute).toBe("z765");
 			expect(ptn1.parse("str").attribute).toBe("rtsz");
 			expect(ptn1.parse("").attribute).toBe("z");
@@ -499,12 +512,12 @@ describe("Rena", function () {
 		});
 		it("letrec", function () {
 			var ptn1 = R.letrec(function(t, f, e) {
-					return R.t(f).zeroOrMore(R.or(
+					return R.t(f).thenZeroOrMore(R.or(
 						R.t("+").t(f, function(x, a, b) { return b + a; }),
 						R.t("-").t(f, function(x, a, b) { return b - a; })));
 				},
 				function(t, f, e) {
-					return R.t(e).zeroOrMore(R.or(
+					return R.t(e).thenZeroOrMore(R.or(
 						R.t("*").t(e, function(x, a, b) { return b * a; }),
 						R.t("/").t(e, function(x, a, b) { return b / a; })));
 				},
@@ -518,12 +531,12 @@ describe("Rena", function () {
 		});
 		it("Yn", function () {
 			var ptn1 = R.Yn(function(t, f, e) {
-					return R.t(f).zeroOrMore(R.or(
+					return R.t(f).thenZeroOrMore(R.or(
 						R.t("+").t(f, function(x, a, b) { return b + a; }),
 						R.t("-").t(f, function(x, a, b) { return b - a; })));
 				},
 				function(t, f, e) {
-					return R.t(e).zeroOrMore(R.or(
+					return R.t(e).thenZeroOrMore(R.or(
 						R.t("*").t(e, function(x, a, b) { return b * a; }),
 						R.t("/").t(e, function(x, a, b) { return b / a; })));
 				},
@@ -538,12 +551,12 @@ describe("Rena", function () {
 		it("ignoreDefault", function () {
 			var Q = R.clone().ignoreDefault(/\s+/),
 				ptn1 = Q.letrec(function(t, f, e) {
-					return Q.t(f).zeroOrMore(Q.or(
+					return Q.t(f).thenZeroOrMore(Q.or(
 						Q.t("+").t(f, function(x, a, b) { return b + a; }),
 						Q.t("-").t(f, function(x, a, b) { return b - a; })));
 				},
 				function(t, f, e) {
-					return Q.t(e).zeroOrMore(Q.or(
+					return Q.t(e).thenZeroOrMore(Q.or(
 						Q.t("*").t(e, function(x, a, b) { return b * a; }),
 						Q.t("/").t(e, function(x, a, b) { return b / a; })));
 				},
@@ -580,9 +593,9 @@ describe("Rena", function () {
 		});
 		it("CSV", function () {
 			var csvparser = new R();
-			csvparser.t(R.attr([]).maybe(R.delimitArray(R.delimitArray(R.or(
+			csvparser.t(R.attr([]).thenMaybe(R.delimitArray(R.delimitArray(R.or(
 				R('"').t(/(""|[^"])+/, function(x) { return x.replace('""', '"'); }).t('"'),
-				R(/[^",\n\r]+/, R.I)), ","), R.br()))).maybe(R.br()).isEnd();
+				R(/[^",\n\r]+/, R.I)), ","), R.br()))).thenMaybe(R.br()).isEnd();
 			expect(csvparser.parse('a,b,c\nd,"e\n""f",g\nh\n').attribute).toEqual([["a","b","c"],["d","e\n\"f","g"],["h"]]);
 			expect(csvparser.parse('a,b,c\nd,"e\n""f",g\nh').attribute).toEqual([["a","b","c"],["d","e\n\"f","g"],["h"]]);
 			expect(csvparser.parse('d,"e\n""f",g').attribute).toEqual([["d","e\n\"f","g"]]);

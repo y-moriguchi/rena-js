@@ -543,14 +543,94 @@
 			 *
 			 * @param {Number} countmin minimum of repetation
 			 * @param {Number} countmax maximum of repetation
+			 * @param {Function} action an action to be invoked
+			 * @param {Object} init an initial attribute
+			 * @return {Rena} this instance
+			 */
+			times: function(countmin, countmax, action, init) {
+				return Rena.times(countmin, countmax, this, action, init);
+			},
+			/**
+			 * repeats the given patterns at least the given count.<br />
+			 * This instance cannot chain matching after this call except br() and isEnd().
+			 * @param {Number} count minimum of repetation
+			 * @param {Function} action an action to be invoked
+			 * @param {Object} init an initial attribute
+			 * @return {Rena} this instance
+			 */
+			atLeast: function(count, action, init) {
+				return this.times(count, -1, action, init);
+			},
+			/**
+			 * repeats the given patterns at most the given count.<br />
+			 * This instance cannot chain matching after this call except br() and isEnd().
+			 * @param {Number} count maximum of repetation
+			 * @param {Function} action an action to be invoked
+			 * @param {Object} init an initial attribute
+			 * @return {Rena} this instance
+			 */
+			atMost: function(count, action, init) {
+				return this.times(0, count, action, init);
+			},
+			/**
+			 * matches zero or one of the given patterns.<br />
+			 * This instance cannot chain matching after this call except br() and isEnd().
+			 * @param {Function} action an action to be invoked
+			 * @return {Rena} this instance
+			 */
+			maybe: function(action) {
+				return this.times(0, 1, action);
+			},
+			/**
+			 * a shortcut of 'atLeast(0, pattern, action, init)'.<br />
+			 * This instance cannot chain matching after this call except br() and isEnd().
+			 * @param {Function} action an action to be invoked
+			 * @param {Object} init an initial attribute
+			 * @return {Rena} this instance
+			 */
+			zeroOrMore: function(action, init) {
+				return this.atLeast(0, action, init);
+			},
+			/**
+			 * a shortcut of 'atLeast(1, pattern, action, init)'.<br />
+			 * This instance cannot chain matching after this call except br() and isEnd().
+			 * @param {Function} action an action to be invoked
+			 * @param {Object} init an initial attribute
+			 * @return {Rena} this instance
+			 */
+			oneOrMore: function(action, init) {
+				return this.atLeast(1, action, init);
+			},
+			/**
+			 * matches a string which is delimited by the given string.<br />
+			 * This instance cannot chain matching after this call except br() and isEnd().
+			 * @param {Object} delimiter a pattern of delimiter
+			 * @param {Function} action an action to be invoked
+			 * @param {Object} init an initial attribute
+			 * @return {Rena} this instance
+			 */
+			delimit: function(delimiter, action, init) {
+				return Rena.delimit(this, delimiter, action, init);
+			},
+			/**
+			 * <p>repeats the given patterns to the given count.<br />
+			 * This instance cannot chain matching after this call except br() and isEnd().
+			 *
+			 * <p>The given action will be called back with three arguments,
+			 * first argument is the matched string,
+			 * second argument is the attribute of repeating pattern,
+			 * third argument is the inherited attribute.
+			 *
+			 * @param {Number} countmin minimum of repetation
+			 * @param {Number} countmax maximum of repetation
 			 * @param {Object} pattern a pattern to match
 			 * @param {Function} action an action to be invoked
 			 * @param {Object} init an initial attribute
 			 * @return {Rena} this instance
 			 */
-			times: function(countmin, countmax, pattern, action, init) {
-				var action = new NewAction(action),
-					repeat = new Repeat(action.action, init, 0, countmin),
+			thenTimes: function(countmin, countmax, pattern, action, init) {
+				var actionNew = new NewAction(action),
+					repeat = new Repeat(actionNew.action, init, 0, countmin),
 					addr;
 				if(countmin < 0) {
 					throw new Error("minimum of repetition must be non negative");
@@ -560,11 +640,11 @@
 					throw new Error("minimum must be less than or equal to maximum");
 				}
 				this._checkNoChain();
-				this._patterns.push(action);
+				this._patterns.push(actionNew);
 				addr = this._patterns.length;
 				this._patterns.push(repeat);
 				this.then(wrap(pattern));
-				this._patterns.push(new GoTo(action.action, addr - this._patterns.length, countmax));
+				this._patterns.push(new GoTo(actionNew.action, addr - this._patterns.length, countmax));
 				repeat.addr = this._patterns.length - addr;
 				this._noChain = true;
 				return this;
@@ -578,8 +658,8 @@
 			 * @param {Object} init an initial attribute
 			 * @return {Rena} this instance
 			 */
-			atLeast: function(count, pattern, action, init) {
-				return this.times(count, -1, pattern, action, init);
+			thenAtLeast: function(count, pattern, action, init) {
+				return this.thenTimes(count, -1, pattern, action, init);
 			},
 			/**
 			 * repeats the given patterns at most the given count.<br />
@@ -590,8 +670,8 @@
 			 * @param {Object} init an initial attribute
 			 * @return {Rena} this instance
 			 */
-			atMost: function(count, pattern, action, init) {
-				return this.times(0, count, pattern, action, init);
+			thenAtMost: function(count, pattern, action, init) {
+				return this.thenTimes(0, count, pattern, action, init);
 			},
 			/**
 			 * matches zero or one of the given patterns.<br />
@@ -600,8 +680,8 @@
 			 * @param {Function} action an action to be invoked
 			 * @return {Rena} this instance
 			 */
-			maybe: function(pattern, action) {
-				return this.times(0, 1, pattern, action);
+			thenMaybe: function(pattern, action) {
+				return this.thenTimes(0, 1, pattern, action);
 			},
 			/**
 			 * a shortcut of 'atLeast(0, pattern, action, init)'.<br />
@@ -611,8 +691,8 @@
 			 * @param {Object} init an initial attribute
 			 * @return {Rena} this instance
 			 */
-			zeroOrMore: function(pattern, action, init) {
-				return this.atLeast(0, pattern, action, init);
+			thenZeroOrMore: function(pattern, action, init) {
+				return this.thenAtLeast(0, pattern, action, init);
 			},
 			/**
 			 * a shortcut of 'atLeast(1, pattern, action, init)'.<br />
@@ -622,8 +702,8 @@
 			 * @param {Object} init an initial attribute
 			 * @return {Rena} this instance
 			 */
-			oneOrMore: function(pattern, action, init) {
-				return this.atLeast(1, pattern, action, init);
+			thenOneOrMore: function(pattern, action, init) {
+				return this.thenAtLeast(1, pattern, action, init);
 			},
 			/**
 			 * matches a string which is delimited by the given string.<br />
@@ -634,18 +714,18 @@
 			 * @param {Object} init an initial attribute
 			 * @return {Rena} this instance
 			 */
-			delimit: function(pattern, delimiter, action, init) {
-				var action = new NewAction(action),
-					repeat = new Repeat(action.action, init, 0, 0),
+			thenDelimit: function(pattern, delimiter, action, init) {
+				var actionNew = new NewAction(action),
+					repeat = new Repeat(actionNew.action, init, 0, 0),
 					addr;
 				this._checkNoChain();
-				this._patterns.push(action);
-				this._patterns.push(new Then(pattern, null, action.action));
+				this._patterns.push(actionNew);
+				this._patterns.push(new Then(pattern, null, actionNew.action));
 				addr = this._patterns.length;
 				this._patterns.push(repeat);
 				this.then(wrap(delimiter));
 				this.then(wrap(pattern));
-				this._patterns.push(new GoTo(action.action, addr - this._patterns.length, -1));
+				this._patterns.push(new GoTo(actionNew.action, addr - this._patterns.length, -1));
 				repeat.addr = this._patterns.length - addr;
 				this._noChain = true;
 				return this;
@@ -659,7 +739,7 @@
 			 * @return {Rena} this instance
 			 */
 			timesArray: function(countmin, countmax, pattern) {
-				return this.times(countmin, countmax, pattern, addArray, []);
+				return this.thenTimes(countmin, countmax, pattern, addArray, []);
 			},
 			/**
 			 * repeats the given patterns at least the given count with accumlating an attribute into array.<br />
@@ -669,7 +749,7 @@
 			 * @return {Rena} this instance
 			 */
 			atLeastArray: function(count, pattern) {
-				return this.times(count, -1, pattern, addArray, []);
+				return this.thenTimes(count, -1, pattern, addArray, []);
 			},
 			/**
 			 * repeats the given patterns at most the given count with accumlating an attribute into array.<br />
@@ -679,7 +759,7 @@
 			 * @return {Rena} this instance
 			 */
 			atMostArray: function(count, pattern) {
-				return this.times(0, count, pattern, addArray, []);
+				return this.thenTimes(0, count, pattern, addArray, []);
 			},
 			/**
 			 * a shortcut of 'atLeastArray(0, pattern)'.
@@ -688,7 +768,7 @@
 			 * @return {Rena} this instance
 			 */
 			zeroOrMoreArray: function(pattern) {
-				return this.atLeast(0, pattern, addArray, []);
+				return this.thenAtLeast(0, pattern, addArray, []);
 			},
 			/**
 			 * a shortcut of 'atLeastArray(1, pattern)'.
@@ -697,7 +777,7 @@
 			 * @return {Rena} this instance
 			 */
 			oneOrMoreArray: function(pattern) {
-				return this.atLeast(1, pattern, addArray, []);
+				return this.thenAtLeast(1, pattern, addArray, []);
 			},
 			/**
 			 * matches a string which is delimited by the given string with accumlating an attribute into array.<br />
@@ -707,7 +787,7 @@
 			 * @return {Rena} this instance
 			 */
 			delimitArray: function(pattern, delimiter) {
-				return this.delimit(pattern, delimiter, addArray, []);
+				return this.thenDelimit(pattern, delimiter, addArray, []);
 			},
 			/**
 			 * matches the pattern not consuming the string to be matched.
@@ -964,7 +1044,7 @@
 		 * @return {Rena} new instance
 		 */
 		Rena.maybe = function(pattern, action) {
-			return new Rena().maybe(pattern, action);
+			return new Rena().thenMaybe(pattern, action);
 		};
 		/**
 		 * a shortcut for 'Rena().times()'.
@@ -976,7 +1056,7 @@
 		 * @return {Rena} new instance
 		 */
 		Rena.times = function(countmin, countmax, pattern, action, init) {
-			return new Rena().times(countmin, countmax, pattern, action, init);
+			return new Rena().thenTimes(countmin, countmax, pattern, action, init);
 		};
 		/**
 		 * a shortcut for 'Rena().atLeast()'.
@@ -987,7 +1067,7 @@
 		 * @return {Rena} new instance
 		 */
 		Rena.atLeast = function(count, pattern, action, init) {
-			return new Rena().atLeast(count, pattern, action, init);
+			return new Rena().thenAtLeast(count, pattern, action, init);
 		};
 		/**
 		 * a shortcut for 'Rena().atMost()'.
@@ -998,7 +1078,7 @@
 		 * @return {Rena} new instance
 		 */
 		Rena.atMost = function(count, pattern, action, init) {
-			return new Rena().atMost(count, pattern, action, init);
+			return new Rena().thenAtMost(count, pattern, action, init);
 		};
 		/**
 		 * a shortcut for 'Rena().zeroOrMore()'.
@@ -1008,7 +1088,7 @@
 		 * @return {Rena} new instance
 		 */
 		Rena.zeroOrMore = function(pattern, action, init) {
-			return new Rena().zeroOrMore(pattern, action, init);
+			return new Rena().thenZeroOrMore(pattern, action, init);
 		};
 		/**
 		 * a shortcut for 'Rena().oneOrMore()'.
@@ -1018,7 +1098,7 @@
 		 * @return {Rena} new instance
 		 */
 		Rena.oneOrMore = function(pattern, action, init) {
-			return new Rena().oneOrMore(pattern, action, init);
+			return new Rena().thenOneOrMore(pattern, action, init);
 		};
 		/**
 		 * a shortcut for 'Rena().delimit()'.
@@ -1029,7 +1109,7 @@
 		 * @return {Rena} new instance
 		 */
 		Rena.delimit = function(pattern, delimiter, action, init) {
-			return new Rena().delimit(pattern, delimiter, action, init);
+			return new Rena().thenDelimit(pattern, delimiter, action, init);
 		};
 		/**
 		 * a shortcut for 'Rena().timesArray()'.
@@ -1357,16 +1437,16 @@
 					}
 					switch(option[i].associative) {
 					case "left":
-						grammar[i].t(grammar[i + 1]).zeroOrMore(Rena.or(repeatGrammar(i, i + 1)));
+						grammar[i].t(grammar[i + 1]).thenZeroOrMore(Rena.or(repeatGrammar(i, i + 1)));
 						break;
 					case "right":
-						grammar[i].t(grammar[i + 1]).maybe(Rena.or(repeatGrammar(i, i)));
+						grammar[i].t(grammar[i + 1]).thenMaybe(Rena.or(repeatGrammar(i, i)));
 						break;
 					case "pre":
 						grammar[i].or(Rena.or(repeatGrammarPre(i)), grammar[i + 1]);
 						break;
 					case "post":
-						grammar[i].t(grammar[i + 1]).zeroOrMore(Rena.or(repeatGrammarPost(i)));
+						grammar[i].t(grammar[i + 1]).thenZeroOrMore(Rena.or(repeatGrammarPost(i)));
 						break;
 					default:
 						throw new Error("invalid associative");
