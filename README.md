@@ -8,7 +8,7 @@ Rena.js can also treat synthesized and inherited attributes.
 ## How to use
 
 ### node.js
-Install rena.js:
+Install Rena.js:
 ```
 npm install rena-js
 ```
@@ -64,4 +64,4 @@ console.log(ptn1.parse("4-6/2").attribute);
 ```
 
 ## Document
-[A document of Rena.js is here.](http://rena.morilib.net/-_anonymous_-RenaFactory-Rena.html)
+[A document of Rena.js is here.](http://rena.morilib.net)
