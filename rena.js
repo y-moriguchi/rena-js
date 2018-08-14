@@ -1,4 +1,4 @@
-/**
+/*
  * rena.js
  *
  * Copyright (c) 2018 Yuichiro MORIGUCHI
@@ -18,7 +18,7 @@
 	function nvf(old, value) {
 		return (value === undef || value === null) ? old : value;
 	}
-	/**
+	/*
 	 * Keyword store using trie tree.
 	 * @constructor
 	 */
@@ -40,7 +40,7 @@
 		}
 	}
 	Trie.prototype = {
-		/**
+		/*
 		 * searches a keyword.
 		 * @param {String} str a string to be searched
 		 * @param {Number} index an index to be searched
@@ -357,9 +357,12 @@
 			return result;
 		}
 		/**
-		 * The constructor of Rena.<br />
+		 * The constructor of Rena.  
 		 * If this function does not call as a constructor and arguments are given,
 		 * this call is equivalent to Rena.then(pattern, match).
+		 * @ja
+		 * Renaのコンストラクタです。  
+		 * コンストラクタとして呼ばなかった時はRena.then(pattern, match)と同じです。
 		 * @constructor
 		 * @param {Object} pattern a pattern to match
 		 * @param {Function} action an action(call as method)
@@ -392,21 +395,29 @@
 				return this;
 			},
 			/**
-			 * <p>matches to the pattern simply.<br />
-			 * A simple string, a regular expression, a function or a Rena object can be specified as a pattern.
-			 *
-			 * <p>The matching function must have two arguments,
+			 * @class Rena
+			 * matches to the pattern simply.  
+			 * A simple string, a regular expression, a function or a Rena object can be specified as a pattern.  
+			 * The matching function must have two arguments,
 			 * first argument is the string to match and second argument is the position to match,
-			 * and return an object if it matches or null if it does not match.<br />
+			 * and return an object if it matches or null if it does not match.  
 			 * The object to be returned has two properties,
 			 * one of this is the matched string which named "match",
-			 * another is the matched last position which named "lastMatch".
-			 *
-			 * <p>The given action will be called back with two or three arguments,
+			 * another is the matched last position which named "lastMatch".  
+			 * The given action will be called back with two or three arguments,
 			 * first argument is the matched string,
 			 * second argument is the inherited attribute,
-			 * third argument, which is given when the pattern is regular expression, is the object which is returned by RegExp.exec().
-			 *
+			 * third argument is the synthesized attribute.
+			 * @ja
+			 * 単純にパターンとマッチします。  
+			 * パターンには単純な文字列、正規表現、関数、Renaオブジェクトが指定できます。  
+			 * マッチする関数は2つの引数を持ちます。  
+			 * 最初の引数はマッチさせる文字列、2番目の引数はマッチさせたい文字列の位置が指定されます。  
+			 * 関数はオブジェクト(マッチしたとき)、またはnull(マッチしなかったとき)を返します。  
+			 * オブジェクトは2つのプロパティを持つ必要があります。  
+			 * マッチしたオブジェクトを格納する"match"と、マッチした最後の位置を表す"lastMatch"です。  
+			 * アクションは2つか3つの引数とともにコールバックされます。  
+			 * 最初の引数はマッチした文字列、2番目の引数は継承された属性、3番目はマッチしたパターンが返した属性です。
 			 * @param {Object} pattern a pattern to match
 			 * @param {Function} action an action to be invoked
 			 * @return {Rena} this instance
@@ -416,7 +427,10 @@
 				return this._then(pattern, action);
 			},
 			/**
+			 * @class Rena
 			 * a shortcut of 'then'.
+			 * @ja
+			 * 'then'のショートカットです。
 			 * @param {Object} pattern a pattern to match
 			 * @param {Function} action an action to be invoked
 			 * @return {Rena} this instance
@@ -425,7 +439,10 @@
 				return this.then(pattern, action);
 			},
 			/**
+			 * @class Rena
 			 * a shortcut of 'then(pattern, Rena.pass)'.
+			 * @ja
+			 * 'then(pattern, Rena.pass)'のショートカットです。
 			 * @param {Object} pattern a pattern to match
 			 * @return {Rena} this instance
 			 */
@@ -433,7 +450,10 @@
 				return this.then(pattern, Rena.pass);
 			},
 			/**
+			 * @class Rena
 			 * a shortcut of 'then(pattern, function(x) { return parseInt(x); })'.
+			 * @ja
+			 * 'then(pattern, function(x) { return parseInt(x); })'のショートカットです。
 			 * @param {Object} pattern a pattern to match
 			 * @return {Rena} this instance
 			 */
@@ -443,7 +463,10 @@
 				});
 			},
 			/**
+			 * @class Rena
 			 * a shortcut of 'then(pattern, function(x) { return parseFloat(x); })'.
+			 * @ja
+			 * 'then(pattern, function(x) { return parseFloat(x); })'のショートカットです。
 			 * @param {Object} pattern a pattern to match
 			 * @return {Rena} this instance
 			 */
@@ -453,14 +476,20 @@
 				});
 			},
 			/**
+			 * @class Rena
 			 * matches a newline.
+			 * @ja
+			 * 改行文字にマッチします。
 			 * @return {Rena} this instance
 			 */
 			br: function() {
 				return this._then(/\r\n|\r|\n/);
 			},
 			/**
+			 * @class Rena
 			 * matches end of string
+			 * @ja
+			 * 文字列の終わりにマッチします。
 			 * @return {Rena} this instance
 			 */
 			isEnd: function() {
@@ -472,7 +501,11 @@
 				});
 			},
 			/**
+			 * @class Rena
 			 * matches the identifier.
+			 * @ja
+			 * 識別子にマッチします。  
+			 * 文字列の後に空白またはトークンが続くときにマッチします。
 			 * @param {String} id identifier to match
 			 * @return {Rena} this instance
 			 */
@@ -503,7 +536,10 @@
 				return me;
 			},
 			/**
+			 * @class Rena
 			 * matches a float number and sets the number as an attribute.
+			 * @ja
+			 * 浮動小数点数にマッチし、その値を属性として返します。
 			 * @param {Boolean} signum matches sign if signum is true
 			 * @return {Rean} this instance
 			 */
@@ -513,7 +549,11 @@
 				return this.thenFloat(signum ? withsign : nosign);
 			},
 			/**
+			 * @class Rena
 			 * matches one of the given patterns.
+			 * @ja
+			 * 引数のパターンのいずれかにマッチするときマッチします。  
+			 * バックトラックができます。
 			 * @return {Rena} this instance
 			 */
 			or: function(alternatives) {
@@ -533,14 +573,17 @@
 				return this;
 			},
 			/**
-			 * <p>repeats the given patterns to the given count.<br />
-			 * This instance cannot chain matching after this call except br() and isEnd().
-			 *
-			 * <p>The given action will be called back with three arguments,
+			 * @class Rena
+			 * repeats the given patterns to the given count.  
+			 * This instance cannot chain matching after this call except br() and isEnd().  
+			 * The given action will be called back with three arguments,
 			 * first argument is the matched string,
 			 * second argument is the attribute of repeating pattern,
 			 * third argument is the inherited attribute.
-			 *
+			 * @ja
+			 * 与えられたバターンを与えられた回数繰り返します。  
+			 * アクションは3つの引数とともにコールバックされます。  
+			 * 最初の引数はマッチした文字列、2番目の引数は継承された属性、3番目はマッチしたパターンが返した属性です。
 			 * @param {Number} countmin minimum of repetation
 			 * @param {Number} countmax maximum of repetation
 			 * @param {Function} action an action to be invoked
@@ -551,8 +594,12 @@
 				return Rena.times(countmin, countmax, this, action, init);
 			},
 			/**
-			 * repeats the given patterns at least the given count.<br />
+			 * @class Rena
+			 * repeats the given patterns at least the given count.  
 			 * This instance cannot chain matching after this call except br() and isEnd().
+			 * @ja
+			 * 与えられた回数以上パターンをマッチします。  
+			 * このメソッドの後にパターンをマッチすることはできません。
 			 * @param {Number} count minimum of repetation
 			 * @param {Function} action an action to be invoked
 			 * @param {Object} init an initial attribute
@@ -562,8 +609,12 @@
 				return this.times(count, -1, action, init);
 			},
 			/**
-			 * repeats the given patterns at most the given count.<br />
+			 * @class Rena
+			 * repeats the given patterns at most the given count.  
 			 * This instance cannot chain matching after this call except br() and isEnd().
+			 * @ja
+			 * 最大与えられた回数までパターンをマッチします。  
+			 * このメソッドの後にパターンをマッチすることはできません。
 			 * @param {Number} count maximum of repetation
 			 * @param {Function} action an action to be invoked
 			 * @param {Object} init an initial attribute
@@ -573,8 +624,12 @@
 				return this.times(0, count, action, init);
 			},
 			/**
-			 * matches zero or one of the given patterns.<br />
+			 * @class Rena
+			 * matches zero or one of the given patterns.  
 			 * This instance cannot chain matching after this call except br() and isEnd().
+			 * @ja
+			 * 0回または1回パターンをマッチします。  
+			 * このメソッドの後にパターンをマッチすることはできません。
 			 * @param {Function} action an action to be invoked
 			 * @return {Rena} this instance
 			 */
@@ -582,8 +637,12 @@
 				return this.times(0, 1, action);
 			},
 			/**
-			 * a shortcut of 'atLeast(0, pattern, action, init)'.<br />
+			 * @class Rena
+			 * a shortcut of 'atLeast(0, pattern, action, init)'.  
 			 * This instance cannot chain matching after this call except br() and isEnd().
+			 * @ja
+			 * 'atLeast(0, pattern, action, init)'のショートカットです。  
+			 * このメソッドの後にパターンをマッチすることはできません。
 			 * @param {Function} action an action to be invoked
 			 * @param {Object} init an initial attribute
 			 * @return {Rena} this instance
@@ -592,8 +651,12 @@
 				return this.atLeast(0, action, init);
 			},
 			/**
-			 * a shortcut of 'atLeast(1, pattern, action, init)'.<br />
+			 * @class Rena
+			 * a shortcut of 'atLeast(1, pattern, action, init)'.  
 			 * This instance cannot chain matching after this call except br() and isEnd().
+			 * @ja
+			 * 'atLeast(1, pattern, action, init)'のショートカットです。  
+			 * このメソッドの後にパターンをマッチすることはできません。
 			 * @param {Function} action an action to be invoked
 			 * @param {Object} init an initial attribute
 			 * @return {Rena} this instance
@@ -602,8 +665,12 @@
 				return this.atLeast(1, action, init);
 			},
 			/**
-			 * matches a string which is delimited by the given string.<br />
+			 * @class Rena
+			 * matches a string which is delimited by the given string.  
 			 * This instance cannot chain matching after this call except br() and isEnd().
+			 * @ja
+			 * 与えれれたデリミタで区切られたパターンにマッチします。
+			 * このメソッドの後にパターンをマッチすることはできません。
 			 * @param {Object} delimiter a pattern of delimiter
 			 * @param {Function} action an action to be invoked
 			 * @param {Object} init an initial attribute
@@ -613,14 +680,17 @@
 				return Rena.delimit(this, delimiter, action, init);
 			},
 			/**
-			 * <p>repeats the given patterns to the given count.<br />
-			 * This instance cannot chain matching after this call except br() and isEnd().
-			 *
-			 * <p>The given action will be called back with three arguments,
+			 * @class Rena
+			 * repeats the given patterns to the given count.  
+			 * This instance cannot chain matching after this call except br() and isEnd().  
+			 * The given action will be called back with three arguments,  
 			 * first argument is the matched string,
 			 * second argument is the attribute of repeating pattern,
 			 * third argument is the inherited attribute.
-			 *
+			 * @ja
+			 * 与えられたバターンを与えられた回数繰り返します。  
+			 * アクションは3つの引数とともにコールバックされます。  
+			 * 最初の引数はマッチした文字列、2番目の引数は継承された属性、3番目はマッチしたパターンが返した属性です。
 			 * @param {Number} countmin minimum of repetation
 			 * @param {Number} countmax maximum of repetation
 			 * @param {Object} pattern a pattern to match
@@ -650,8 +720,12 @@
 				return this;
 			},
 			/**
-			 * repeats the given patterns at least the given count.<br />
+			 * @class Rena
+			 * repeats the given patterns at least the given count.  
 			 * This instance cannot chain matching after this call except br() and isEnd().
+			 * @ja
+			 * 与えられた回数以上パターンをマッチします。  
+			 * このメソッドの後にパターンをマッチすることはできません。
 			 * @param {Number} count minimum of repetation
 			 * @param {Object} pattern a pattern to match
 			 * @param {Function} action an action to be invoked
@@ -662,8 +736,12 @@
 				return this.thenTimes(count, -1, pattern, action, init);
 			},
 			/**
-			 * repeats the given patterns at most the given count.<br />
+			 * @class Rena
+			 * repeats the given patterns at most the given count.  
 			 * This instance cannot chain matching after this call except br() and isEnd().
+			 * @ja
+			 * 最大与えられた回数までパターンをマッチします。  
+			 * このメソッドの後にパターンをマッチすることはできません。
 			 * @param {Number} count maximum of repetation
 			 * @param {Object} pattern a pattern to match
 			 * @param {Function} action an action to be invoked
@@ -674,8 +752,12 @@
 				return this.thenTimes(0, count, pattern, action, init);
 			},
 			/**
-			 * matches zero or one of the given patterns.<br />
+			 * @class Rena
+			 * matches zero or one of the given patterns.  
 			 * This instance cannot chain matching after this call except br() and isEnd().
+			 * @ja
+			 * 0回または1回パターンをマッチします。  
+			 * このメソッドの後にパターンをマッチすることはできません。
 			 * @param {Object} pattern a pattern to match
 			 * @param {Function} action an action to be invoked
 			 * @return {Rena} this instance
@@ -684,8 +766,12 @@
 				return this.thenTimes(0, 1, pattern, action);
 			},
 			/**
-			 * a shortcut of 'atLeast(0, pattern, action, init)'.<br />
+			 * @class Rena
+			 * a shortcut of 'atLeast(0, pattern, action, init)'.  
 			 * This instance cannot chain matching after this call except br() and isEnd().
+			 * @ja
+			 * 'atLeast(0, pattern, action, init)'のショートカットです。  
+			 * このメソッドの後にパターンをマッチすることはできません。
 			 * @param {Object} pattern a pattern to match
 			 * @param {Function} action an action to be invoked
 			 * @param {Object} init an initial attribute
@@ -695,8 +781,12 @@
 				return this.thenAtLeast(0, pattern, action, init);
 			},
 			/**
-			 * a shortcut of 'atLeast(1, pattern, action, init)'.<br />
+			 * @class Rena
+			 * a shortcut of 'atLeast(1, pattern, action, init)'.  
 			 * This instance cannot chain matching after this call except br() and isEnd().
+			 * @ja
+			 * 'atLeast(1, pattern, action, init)'のショートカットです。  
+			 * このメソッドの後にパターンをマッチすることはできません。
 			 * @param {Object} pattern a pattern to match
 			 * @param {Function} action an action to be invoked
 			 * @param {Object} init an initial attribute
@@ -706,8 +796,12 @@
 				return this.thenAtLeast(1, pattern, action, init);
 			},
 			/**
-			 * matches a string which is delimited by the given string.<br />
+			 * @class Rena
+			 * matches a string which is delimited by the given string.  
 			 * This instance cannot chain matching after this call except br() and isEnd().
+			 * @ja
+			 * 与えれれたデリミタで区切られたパターンにマッチします。
+			 * このメソッドの後にパターンをマッチすることはできません。
 			 * @param {Object} pattern a pattern to match
 			 * @param {Object} delimiter a pattern of delimiter
 			 * @param {Function} action an action to be invoked
@@ -731,8 +825,12 @@
 				return this;
 			},
 			/**
-			 * repeats the given patterns to the given count with accumlating an attribute into array.<br />
+			 * @class Rena
+			 * repeats the given patterns to the given count with accumlating an attribute into array.  
 			 * This instance cannot chain matching after this call except br() and isEnd().
+			 * @ja
+			 * 与えられたバターンを与えられた回数繰り返して属性を配列に格納します。  
+			 * このメソッドの後にパターンをマッチすることはできません。
 			 * @param {Number} countmin minimum of repetation
 			 * @param {Number} countmax maximum of repetation
 			 * @param {Object} pattern a pattern to match
@@ -742,8 +840,12 @@
 				return this.thenTimes(countmin, countmax, pattern, addArray, []);
 			},
 			/**
-			 * repeats the given patterns at least the given count with accumlating an attribute into array.<br />
+			 * @class Rena
+			 * repeats the given patterns at least the given count with accumlating an attribute into array.  
 			 * This instance cannot chain matching after this call except br() and isEnd().
+			 * @ja
+			 * 与えられた回数以上パターンをマッチして属性を配列に格納します。  
+			 * このメソッドの後にパターンをマッチすることはできません。
 			 * @param {Number} count minimum of repetation
 			 * @param {Object} pattern a pattern to match
 			 * @return {Rena} this instance
@@ -752,8 +854,12 @@
 				return this.thenTimes(count, -1, pattern, addArray, []);
 			},
 			/**
-			 * repeats the given patterns at most the given count with accumlating an attribute into array.<br />
+			 * @class Rena
+			 * repeats the given patterns at most the given count with accumlating an attribute into array.  
 			 * This instance cannot chain matching after this call except br() and isEnd().
+			 * @ja
+			 * 最大与えられた回数までパターンをマッチして属性を配列に格納します。  
+			 * このメソッドの後にパターンをマッチすることはできません。
 			 * @param {Number} count maximum of repetation
 			 * @param {Object} pattern a pattern to match
 			 * @return {Rena} this instance
@@ -762,8 +868,12 @@
 				return this.thenTimes(0, count, pattern, addArray, []);
 			},
 			/**
-			 * a shortcut of 'atLeastArray(0, pattern)'.
-			 * This instance cannot chain matching after this call except br() and isEnd().<br />
+			 * @class Rena
+			 * a shortcut of 'atLeastArray(0, pattern)'.  
+			 * This instance cannot chain matching after this call except br() and isEnd().
+			 * @ja
+			 * 'atLeastArray(0, pattern, action, init)'のショートカットです。  
+			 * このメソッドの後にパターンをマッチすることはできません。
 			 * @param {Object} pattern a pattern to match
 			 * @return {Rena} this instance
 			 */
@@ -771,8 +881,12 @@
 				return this.thenAtLeast(0, pattern, addArray, []);
 			},
 			/**
-			 * a shortcut of 'atLeastArray(1, pattern)'.
-			 * This instance cannot chain matching after this call except br() and isEnd().<br />
+			 * @class Rena
+			 * a shortcut of 'atLeastArray(1, pattern)'.  
+			 * This instance cannot chain matching after this call except br() and isEnd().
+			 * @ja
+			 * 'atLeastArray(1, pattern, action, init)'のショートカットです。  
+			 * このメソッドの後にパターンをマッチすることはできません。
 			 * @param {Object} pattern a pattern to match
 			 * @return {Rena} this instance
 			 */
@@ -780,8 +894,12 @@
 				return this.thenAtLeast(1, pattern, addArray, []);
 			},
 			/**
-			 * matches a string which is delimited by the given string with accumlating an attribute into array.<br />
+			 * @class Rena
+			 * matches a string which is delimited by the given string with accumlating an attribute into array.  
 			 * This instance cannot chain matching after this call except br() and isEnd().
+			 * @ja
+			 * 与えれれたデリミタで区切られたパターンにマッチします。
+			 * このメソッドの後にパターンをマッチすることはできません。
 			 * @param {Object} pattern a pattern to match
 			 * @param {Object} delimiter a pattern of delimiter
 			 * @return {Rena} this instance
@@ -790,7 +908,10 @@
 				return this.thenDelimit(pattern, delimiter, addArray, []);
 			},
 			/**
+			 * @class Rena
 			 * matches the pattern not consuming the string to be matched.
+			 * @ja
+			 * パターンを文字列を消費せずに先読みします。
 			 * @param {Object} pattern a pattern to match
 			 * @param {Boolean} positive succeed when the pattern does not match if this value is falsy
 			 * @return {Rena} this instance
@@ -802,7 +923,10 @@
 				return this;
 			},
 			/**
+			 * @class Rena
 			 * a shortcut of 'lookahead(pattern, false)'.
+			 * @ja
+			 * パターンを文字列を消費せずに否定先読みします。
 			 * @param {Object} pattern a pattern to match
 			 * @return {Rena} this instance
 			 */
@@ -810,7 +934,10 @@
 				return this.lookahead(pattern, false);
 			},
 			/**
+			 * @class Rena
 			 * matches the pattern if the given condition is truthy.
+			 * @ja
+			 * 属性が与えられた条件を満たすときにパターンにマッチします。
 			 * @param {Function} cond the condition
 			 * @return {Rena} this instance
 			 */
@@ -820,7 +947,10 @@
 				return this;
 			},
 			/**
+			 * @class Rena
 			 * ignores all action after this.
+			 * @ja
+			 * このメソッドの後のアクションを無視します。
 			 * @return {Rena} this instance
 			 */
 			passAll: function() {
@@ -829,7 +959,10 @@
 				return this;
 			},
 			/**
+			 * @class Rena
 			 * sets the given value as the attribute.
+			 * @ja
+			 * 属性を与えられた値にセットします。
 			 * @param {Object} attr an attribute
 			 * @return {Rena} this instance
 			 */
@@ -839,7 +972,10 @@
 				return this;
 			},
 			/**
+			 * @class Rena
 			 * execute the given action and sets the return value as the attribute.
+			 * @ja
+			 * 与えられたアクションを実行し、戻り値を属性としてセットします。
 			 * @param {Object} action an action
 			 * @return {Rena} this instance
 			 */
@@ -849,7 +985,10 @@
 				return this;
 			},
 			/**
+			 * @class Rena
 			 * matches a keyword.
+			 * @ja
+			 * キーワードにマッチします。
 			 * @param {String} word a keyword to be matched
 			 * @param {Trie} trie a trie tree to match
 			 * @return {Rena} this instance
@@ -860,7 +999,10 @@
 				return this;
 			},
 			/**
+			 * @class Rena
 			 * checks whether any keywords are not matched.
+			 * @ja
+			 * いかなるキーワードにもマッチしないときにマッチします。
 			 * @param {Trie} trie a trie tree to match
 			 * @return {Rena} this instance
 			 */
@@ -868,7 +1010,10 @@
 				return this.key("", trie);
 			},
 			/**
+			 * @class Rena
 			 * parses the given string from the given index.
+			 * @ja
+			 * 与えられた位置からパースを開始します。
 			 * @param {String} str a string to be parsed
 			 * @param {Number} index an index to start
 			 * @param {Object} attribute an initial attribute
@@ -881,7 +1026,10 @@
 				return testRe(str, ind, this, 0, caps, attr);
 			},
 			/**
+			 * @class Rena
 			 * parses the given string partially.
+			 * @ja
+			 * 部分的にパースします。
 			 * @param {String} str a string to be parsed
 			 * @param {Object} attribute an initial attribute
 			 */
@@ -898,7 +1046,10 @@
 				return null;
 			},
 			/**
+			 * @class Rena
 			 * parses the given string continuously.
+			 * @ja
+			 * 部分的に繰り返してパースします。
 			 * @param {String} str a string to be parsed
 			 * @param {Object} init an initial attribute
 			 * @param {Function} action a function to accumlate attributes
@@ -920,7 +1071,10 @@
 				return attr;
 			},
 			/**
+			 * @class Rena
 			 * parses the given string continuously and accumlate to an array.
+			 * @ja
+			 * 部分的に繰り返してパースして配列に格納します。
 			 * @param {String} str a string to be parsed
 			 * @return {Object} array of accumlated attribute
 			 */
@@ -932,7 +1086,10 @@
 				});
 			},
 			/**
+			 * @class Rena
 			 * parses the given string entirely.
+			 * @ja
+			 * 文字列全体をパースします。
 			 * @param {String} str a string to be parsed
 			 * @param {Object} attribute an initial attribute
 			 */
@@ -958,6 +1115,8 @@
 		}
 		/**
 		 * a shortcut for 'Rena().then()'.
+		 * @ja
+		 * 'Rena().then()'のショートカットです。
 		 * @param {Object} pattern a pattern to match
 		 * @param {Function} action an action to be invoked
 		 * @return {Rena} new instance
@@ -967,6 +1126,8 @@
 		};
 		/**
 		 * a shortcut for 'Rena().t()'.
+		 * @ja
+		 * 'Rena().t()'のショートカットです。
 		 * @param {Object} pattern a pattern to match
 		 * @param {Function} action an action to be invoked
 		 * @return {Rena} new instance
@@ -976,6 +1137,8 @@
 		};
 		/**
 		 * a shortcut for 'Rena().thenPass()'.
+		 * @ja
+		 * 'Rena().thenPass()'のショートカットです。
 		 * @param {Object} pattern a pattern to match
 		 * @return {Rena} new instance
 		 */
@@ -984,6 +1147,8 @@
 		};
 		/**
 		 * a shortcut for 'Rena().thenInt()'.
+		 * @ja
+		 * 'Rena().thenInt()'のショートカットです。
 		 * @param {Object} pattern a pattern to match
 		 * @return {Rena} new instance
 		 */
@@ -992,6 +1157,8 @@
 		};
 		/**
 		 * a shortcut for 'Rena().thenFloat()'.
+		 * @ja
+		 * 'Rena().thenFloat()'のショートカットです。
 		 * @param {Object} pattern a pattern to match
 		 * @return {Rena} new instance
 		 */
@@ -1000,6 +1167,8 @@
 		};
 		/**
 		 * a shortcut for 'Rena().br()'.
+		 * @ja
+		 * 'Rena().br()'のショートカットです。
 		 * @return {Rena} new instance
 		 */
 		Rena.br = function() {
@@ -1007,6 +1176,8 @@
 		};
 		/**
 		 * a shortcut for 'Rena().isEnd()'.
+		 * @ja
+		 * 'Rena().isEnd()'のショートカットです。
 		 * @return {Rena} new instance
 		 */
 		Rena.isEnd = function() {
@@ -1014,6 +1185,8 @@
 		};
 		/**
 		 * a shortcut for 'Rena().equalsId()'.
+		 * @ja
+		 * 'Rena().equalsId()'のショートカットです。
 		 * @param {String} id identifier to match
 		 * @return {Rena} new instance
 		 */
@@ -1022,6 +1195,8 @@
 		};
 		/**
 		 * a shortcut for 'Rena().real()'.
+		 * @ja
+		 * 'Rena().real()'のショートカットです。
 		 * @param {Boolean} signum matches sign if signum is true
 		 * @return {Rena} new instance
 		 */
@@ -1030,6 +1205,8 @@
 		};
 		/**
 		 * a shortcut for 'Rena().or()'.
+		 * @ja
+		 * 'Rena().or()'のショートカットです。
 		 * @return {Rena} new instance
 		 */
 		Rena.or = function() {
@@ -1039,6 +1216,8 @@
 		};
 		/**
 		 * a shortcut for 'Rena().maybe()'.
+		 * @ja
+		 * 'Rena().maybe()'のショートカットです。
 		 * @param {Object} pattern a pattern to match
 		 * @param {Function} action an action to be invoked
 		 * @return {Rena} new instance
@@ -1048,6 +1227,8 @@
 		};
 		/**
 		 * a shortcut for 'Rena().times()'.
+		 * @ja
+		 * 'Rena().times()'のショートカットです。
 		 * @param {Number} countmin minimum of repetation
 		 * @param {Number} countmax maximum of repetation
 		 * @param {Object} pattern a pattern to match
@@ -1060,6 +1241,8 @@
 		};
 		/**
 		 * a shortcut for 'Rena().atLeast()'.
+		 * @ja
+		 * 'Rena().atLeast()'のショートカットです。
 		 * @param {Number} count minimum of repetation
 		 * @param {Object} pattern a pattern to match
 		 * @param {Function} action an action to be invoked
@@ -1071,6 +1254,8 @@
 		};
 		/**
 		 * a shortcut for 'Rena().atMost()'.
+		 * @ja
+		 * 'Rena().atMost()'のショートカットです。
 		 * @param {Number} count maximum of repetation
 		 * @param {Object} pattern a pattern to match
 		 * @param {Function} action an action to be invoked
@@ -1082,6 +1267,8 @@
 		};
 		/**
 		 * a shortcut for 'Rena().zeroOrMore()'.
+		 * @ja
+		 * 'Rena().zeroOrMore()'のショートカットです。
 		 * @param {Object} pattern a pattern to match
 		 * @param {Function} action an action to be invoked
 		 * @param {Object} init an initial attribute
@@ -1092,6 +1279,8 @@
 		};
 		/**
 		 * a shortcut for 'Rena().oneOrMore()'.
+		 * @ja
+		 * 'Rena().oneOrMore()'のショートカットです。
 		 * @param {Object} pattern a pattern to match
 		 * @param {Function} action an action to be invoked
 		 * @param {Object} init an initial attribute
@@ -1102,6 +1291,8 @@
 		};
 		/**
 		 * a shortcut for 'Rena().delimit()'.
+		 * @ja
+		 * 'Rena().delimit()'のショートカットです。
 		 * @param {Object} pattern a pattern to match
 		 * @param {Object} delimiter a pattern of delimiter
 		 * @param {Function} action an action to be invoked
@@ -1113,6 +1304,8 @@
 		};
 		/**
 		 * a shortcut for 'Rena().timesArray()'.
+		 * @ja
+		 * 'Rena().timesArray()'のショートカットです。
 		 * @param {Number} countmin minimum of repetation
 		 * @param {Number} countmax maximum of repetation
 		 * @param {Object} pattern a pattern to match
@@ -1123,6 +1316,8 @@
 		};
 		/**
 		 * a shortcut for 'Rena().atLeastArray()'.
+		 * @ja
+		 * 'Rena().atLeastArray()'のショートカットです。
 		 * @param {Number} count minimum of repetation
 		 * @param {Object} pattern a pattern to match
 		 * @return {Rena} new instance
@@ -1132,6 +1327,8 @@
 		};
 		/**
 		 * a shortcut for 'Rena().atMostArray()'.
+		 * @ja
+		 * 'Rena().atMostArray()'のショートカットです。
 		 * @param {Number} count maximum of repetation
 		 * @param {Object} pattern a pattern to match
 		 * @return {Rena} new instance
@@ -1141,6 +1338,8 @@
 		};
 		/**
 		 * a shortcut for 'Rena().zeroOrMoreArray()'.
+		 * @ja
+		 * 'Rena().zeroOrMoreArray()'のショートカットです。
 		 * @param {Object} pattern a pattern to match
 		 * @return {Rena} new instance
 		 */
@@ -1149,6 +1348,8 @@
 		};
 		/**
 		 * a shortcut for 'Rena().oneOrMoreArray()'.
+		 * @ja
+		 * 'Rena().oneOrMoreArray()'のショートカットです。
 		 * @param {Object} pattern a pattern to match
 		 * @return {Rena} new instance
 		 */
@@ -1157,6 +1358,8 @@
 		};
 		/**
 		 * a shortcut for 'Rena().delimitArray()'.
+		 * @ja
+		 * 'Rena().delimitArray()'のショートカットです。
 		 * @param {Object} pattern a pattern to match
 		 * @param {Object} delimiter a pattern of delimiter
 		 * @return {Rena} new instance
@@ -1166,6 +1369,8 @@
 		};
 		/**
 		 * a shortcut for 'Rena().lookahead()'.
+		 * @ja
+		 * 'Rena().lookahead()'のショートカットです。
 		 * @param {Object} pattern a pattern to match
 		 * @param {Boolean} positive succeed when the pattern does not match if this value is falsy
 		 * @return {Rena} new instance
@@ -1175,6 +1380,8 @@
 		};
 		/**
 		 * a shortcut for 'Rena().lookaheadNot()'.
+		 * @ja
+		 * 'Rena().lookaheadNot()'のショートカットです。
 		 * @param {Object} pattern a pattern to match
 		 * @return {Rena} new instance
 		 */
@@ -1183,6 +1390,8 @@
 		};
 		/**
 		 * a shortcut for 'Rena().cond()'.
+		 * @ja
+		 * 'Rena().cond()'のショートカットです。
 		 * @param {Function} cond the condition
 		 * @return {Rena} new instance
 		 */
@@ -1191,6 +1400,8 @@
 		};
 		/**
 		 * a shortcut for 'Rena().passAll()'.
+		 * @ja
+		 * 'Rena().passAll()'のショートカットです。
 		 * @return {Rena} new instance
 		 */
 		Rena.passAll = function() {
@@ -1198,6 +1409,8 @@
 		};
 		/**
 		 * a shortcut for 'Rena().attr()'.
+		 * @ja
+		 * 'Rena().attr()'のショートカットです。
 		 * @param {Object} attr an attribute
 		 * @return {Rena} new instance
 		 */
@@ -1206,6 +1419,8 @@
 		};
 		/**
 		 * a shortcut for 'Rena().action()'.
+		 * @ja
+		 * 'Rena().action()'のショートカットです。
 		 * @param {Object} action an action
 		 * @return {Rena} new instance
 		 */
@@ -1214,6 +1429,8 @@
 		};
 		/**
 		 * a shortcut for 'Rena().key()'.
+		 * @ja
+		 * 'Rena().key()'のショートカットです。
 		 * @param {String} word a keyword to be matched
 		 * @param {Trie} trie a trie tree to match
 		 * @return {Rena} new instance
@@ -1223,6 +1440,8 @@
 		};
 		/**
 		 * a shortcut for 'Rena().notKey()'.
+		 * @ja
+		 * 'Rena().notKey()'のショートカットです。
 		 * @param {Trie} trie a trie tree to match
 		 * @return {Rena} new instance
 		 */
@@ -1232,6 +1451,8 @@
 		Rena.pass = function() {};
 		/**
 		 * sets the pattern to be ignored.
+		 * @ja
+		 * 無視されるパターンをセットします。
 		 * @param {Object} pattern a pattern to be ignored
 		 * @param {RenaModule} this Rena module
 		 */
@@ -1242,6 +1463,8 @@
 		Rena.ignoreDefault(null);
 		/**
 		 * sets the pattern to be ignored locally.
+		 * @ja
+		 * 局所的に無視されるパターンをセットします。
 		 * @param {Object} pattern a pattern to be ignored
 		 */
 		Rena.ignore = function(pattern) {
@@ -1249,6 +1472,8 @@
 		};
 		/**
 		 * sets the keywords.
+		 * @ja
+		 * キーワードをセットします。
 		 */
 		Rena.setKey = function(keywords) {
 			var keys;
@@ -1259,7 +1484,7 @@
 			}
 			Rena._trie = new Trie(keys);
 		};
-		/**
+		/*
 		 * defines nonterminal variables.
 		 */
 		Rena.defineNonterminals = function(nonterminals) {
@@ -1276,7 +1501,7 @@
 			}
 			return result;
 		};
-		/**
+		/*
 		 * generates a function which accumlates value using the given method.
 		 * @param {String} method name when the value accumlates
 		 */
@@ -1287,26 +1512,39 @@
 		};
 		/**
 		 * a function which returns first argument.
+		 * @ja
+		 * 最初の引数を返す関数です。
 		 */
 		Rena.I = function(x) { return x; };
 		/**
 		 * a function which returns first argument.
+		 * @ja
+		 * 最初の引数を返す関数です。
 		 */
 		Rena.first = function(x) { return x; };
 		/**
 		 * a function which returns second argument.
+		 * @ja
+		 * 2番目の引数を返す関数です。
 		 */
 		Rena.SK = function(x, y) { return y; };
 		/**
 		 * a function which returns second argument.
+		 * @ja
+		 * 2番目の引数を返す関数です。
 		 */
 		Rena.F = function(x, y) { return y; };
 		/**
 		 * a function which returns second argument.
+		 * @ja
+		 * 2番目の引数を返す関数です。
 		 */
 		Rena.second = function(x, y) { return y; };
 		/**
 		 * a fixed point combinator.
+		 * @ja
+		 * 関数の戻り値を引数に与える関数です。  
+		 * 自分を再帰的に定義するときに使用します。
 		 */
 		Rena.Y = function(f) {
 			return (function(g) {
@@ -1319,8 +1557,11 @@
 			});
 		};
 		/**
-		 * a multiple fixed point combinator.<br />
+		 * a multiple fixed point combinator.  
 		 * <a href="http://okmij.org/ftp/Computation/fixed-point-combinators.html">http://okmij.org/ftp/Computation/fixed-point-combinators.html</a>
+		 * @ja
+		 * 関数の戻り値を引数に与える関数です。  
+		 * 自分を再帰的に定義するときに使用します。
 		 */
 		Rena.Yn = function() {
 			var l = Array.prototype.slice.call(arguments),
@@ -1348,6 +1589,8 @@
 		};
 		/**
 		 * An alias of Rena.Yn().
+		 * @ja
+		 * Rena.Yn()のエイリアスです。
 		 */
 		Rena.letrec = function() {
 			var args = Array.prototype.slice.call(arguments);
@@ -1355,6 +1598,8 @@
 		}
 		/**
 		 * creates the keywords.
+		 * @ja
+		 * キーワードの集合を生成します。
 		 * @return {Trie} a trie tree of keywords
 		 */
 		Rena.createKey = function(keywords) {
@@ -1366,7 +1611,7 @@
 			}
 			return new Trie(keys);
 		};
-		/**
+		/*
 		 * define operator grammar.
 		 * @param {Array} settings
 		 * @return {Rena} Rena object of the operator grammar
