@@ -420,7 +420,10 @@
 			 * オブジェクトは2つのプロパティを持つ必要があります。  
 			 * マッチしたオブジェクトを格納する"match"と、マッチした最後の位置を表す"lastMatch"です。  
 			 * アクションは2つか3つの引数とともにコールバックされます。  
-			 * 最初の引数はマッチした文字列、2番目の引数は継承された属性、3番目はマッチしたパターンが返した属性です。
+			 * 最初の引数はマッチした文字列、2番目のマッチしたパターンが返した属性、3番目は継承された属性です。
+			 * ```
+			 * R.then("765").then("pro");
+			 * ```
 			 * @param {Object} pattern マッチさせるパターン
 			 * @param {Function} action 呼び出されるアクション
 			 * @return {Rena} このインスタンス
@@ -464,6 +467,9 @@
 			 * @return {Rena} this instance
 			 * @ja
 			 * 'then(pattern, function(x) { return parseInt(x); })'のショートカットです。
+			 * ```
+			 * R.thenInt(/[0-9]+/);
+			 * ```
 			 * @param {Object} pattern マッチさせるパターン
 			 * @return {Rena} このインスタンス
 			 */
@@ -479,6 +485,9 @@
 			 * @return {Rena} this instance
 			 * @ja
 			 * 'then(pattern, function(x) { return parseFloat(x); })'のショートカットです。
+			 * ```
+			 * R.thenFloat(/[0-9]+\.[0-9]/);
+			 * ```
 			 * @param {Object} pattern マッチさせるパターン
 			 * @return {Rena} このインスタンス
 			 */
@@ -493,6 +502,9 @@
 			 * @return {Rena} this instance
 			 * @ja
 			 * 改行文字にマッチします。
+			 * ```
+			 * R.br();
+			 * ```
 			 * @return {Rena} このインスタンス
 			 */
 			br: function() {
@@ -504,6 +516,9 @@
 			 * @return {Rena} this instance
 			 * @ja
 			 * 文字列の終わりにマッチします。
+			 * ```
+			 * R.then("end").isEnd();
+			 * ```
 			 * @return {Rena} このインスタンス
 			 */
 			isEnd: function() {
@@ -522,6 +537,9 @@
 			 * @ja
 			 * 識別子にマッチします。  
 			 * 文字列の後に空白またはトークンが続くときにマッチします。
+			 * ```
+			 * R.equalsId("number").then(/[0-9]+/);
+			 * ```
 			 * @param {String} id マッチする識別子
 			 * @return {Rena} このインスタンス
 			 */
@@ -558,6 +576,9 @@
 			 * @return {Rean} this instance
 			 * @ja
 			 * 浮動小数点数にマッチし、その値を属性として返します。
+			 * ```
+			 * R.real();
+			 * ```
 			 * @param {Boolean} signum trueのとき符号にもマッチさせる
 			 * @return {Rean} このインスタンス
 			 */
@@ -573,6 +594,9 @@
 			 * @ja
 			 * 引数のパターンのいずれかにマッチするときマッチします。  
 			 * バックトラックができます。
+			 * ```
+			 * R.or(R.then("765"), R.then("346"), R.then("283"));
+			 * ```
 			 * @return {Rena} このインスタンス
 			 */
 			or: function(alternatives) {
@@ -607,7 +631,13 @@
 			 * @ja
 			 * 与えられたバターンを与えられた回数繰り返します。  
 			 * アクションは3つの引数とともにコールバックされます。  
-			 * 最初の引数はマッチした文字列、2番目の引数はマッチしたパターンが返した属性、3番目は継承された属性です。
+			 * 最初の引数はマッチした文字列、2番目は継承された属性、3番目はマッチしたパターンが返した属性です。  
+			 * このメソッドの後にパターンをマッチすることはできません。
+			 * ```
+			 * // "abc" -> "cba"
+			 * R.then(/[a-z]/, R.I)
+			 *  .times(2, 4, function(matched, inherited, synthesized) { return inherited + synthesized }, "");
+			 * ```
 			 * @param {Number} countmin 繰り返しの最小数
 			 * @param {Number} countmax 繰り返しの最大数
 			 * @param {Function} action 呼び出されるアクション
@@ -628,6 +658,11 @@
 			 * @ja
 			 * 与えられた回数以上パターンをマッチします。  
 			 * このメソッドの後にパターンをマッチすることはできません。
+			 * ```
+			 * // "abc" -> "cba"
+			 * R.then(/[a-z]/, R.I)
+			 *  .atLeast(1, function(matched, inherited, synthesized) { return inherited + synthesized }, "");
+			 * ```
 			 * @param {Number} count 繰り返しの最小数
 			 * @param {Function} action 呼び出されるアクション
 			 * @param {Object} init 属性の初期値
@@ -647,6 +682,11 @@
 			 * @ja
 			 * 最大与えられた回数までパターンをマッチします。  
 			 * このメソッドの後にパターンをマッチすることはできません。
+			 * ```
+			 * // "abc" -> "cba"
+			 * R.then(/[a-z]/, R.I)
+			 *  .atMost(5, function(matched, inherited, synthesized) { return inherited + synthesized }, "");
+			 * ```
 			 * @param {Number} count 繰り返しの最大数
 			 * @param {Function} action 呼び出されるアクション
 			 * @param {Object} init 属性の初期値
@@ -664,6 +704,9 @@
 			 * @ja
 			 * 0回または1回パターンをマッチします。  
 			 * このメソッドの後にパターンをマッチすることはできません。
+			 * ```
+			 * R.then(/[a-z]/).maybe();
+			 * ```
 			 * @param {Function} action 呼び出されるアクション
 			 * @return {Rena} このインスタンス
 			 */
@@ -680,6 +723,11 @@
 			 * @ja
 			 * 'atLeast(0, pattern, action, init)'のショートカットです。  
 			 * このメソッドの後にパターンをマッチすることはできません。
+			 * ```
+			 * // "abc" -> "cba"
+			 * R.then(/[a-z]/, R.I)
+			 *  .zeroOrMore(function(matched, inherited, synthesized) { return inherited + synthesized }, "");
+			 * ```
 			 * @param {Function} action 呼び出されるアクション
 			 * @param {Object} init 属性の初期値
 			 * @return {Rena} このインスタンス
@@ -697,6 +745,11 @@
 			 * @ja
 			 * 'atLeast(1, pattern, action, init)'のショートカットです。  
 			 * このメソッドの後にパターンをマッチすることはできません。
+			 * ```
+			 * // "abc" -> "cba"
+			 * R.then(/[a-z]/, R.I)
+			 *  .oneOrMore(function(matched, inherited, synthesized) { return inherited + synthesized }, "");
+			 * ```
 			 * @param {Function} action 呼び出されるアクション
 			 * @param {Object} init 属性の初期値
 			 * @return {Rena} このインスタンス
@@ -715,6 +768,11 @@
 			 * @ja
 			 * 与えれれたデリミタで区切られたパターンにマッチします。
 			 * このメソッドの後にパターンをマッチすることはできません。
+			 * ```
+			 * // "7+6+5" -> "567"
+			 * R.then(/[0-9]+/, R.I)
+			 *  .delimit("+", function(matched, inherited, synthesized) { return inherited + synthesized; }, "");
+			 * ```
 			 * @param {Object} delimiter デリミタのパターン
 			 * @param {Function} action 呼び出されるアクション
 			 * @param {Object} init 属性の初期値
@@ -740,7 +798,13 @@
 			 * @ja
 			 * 与えられたバターンを与えられた回数繰り返します。  
 			 * アクションは3つの引数とともにコールバックされます。  
-			 * 最初の引数はマッチした文字列、2番目の引数は継承された属性、3番目はマッチしたパターンが返した属性です。
+			 * 最初の引数はマッチした文字列、2番目の引数は継承された属性、3番目はマッチしたパターンが返した属性です。  
+			 * このメソッドの後にパターンをマッチすることはできません。
+			 * ```
+			 * // "abc" -> "cba"
+			 * R().thenTimes(2, 4, R.then(/[a-z]/, R.I),
+			 *      function(matched, inherited, synthesized) { return inherited + synthesized }, "");
+			 * ```
 			 * @param {Number} countmin 繰り返しの最小数
 			 * @param {Number} countmax 繰り返しの最大数
 			 * @param {Object} pattern マッチさせるパターン
@@ -781,6 +845,11 @@
 			 * @ja
 			 * 与えられた回数以上パターンをマッチします。  
 			 * このメソッドの後にパターンをマッチすることはできません。
+			 * ```
+			 * // "abc" -> "cba"
+			 * R().thenAtLeast(2, R.then(/[a-z]/, R.I),
+			 *      function(matched, inherited, synthesized) { return inherited + synthesized }, "");
+			 * ```
 			 * @param {Number} count 繰り返しの最小数
 			 * @param {Object} pattern マッチさせるパターン
 			 * @param {Function} action 呼び出されるアクション
@@ -802,6 +871,11 @@
 			 * @ja
 			 * 最大与えられた回数までパターンをマッチします。  
 			 * このメソッドの後にパターンをマッチすることはできません。
+			 * ```
+			 * // "abc" -> "cba"
+			 * R().thenAtMost(4, R.then(/[a-z]/, R.I),
+			 *      function(matched, inherited, synthesized) { return inherited + synthesized }, "");
+			 * ```
 			 * @param {Number} count 繰り返しの最大数
 			 * @param {Object} pattern マッチさせるパターン
 			 * @param {Function} action 呼び出されるアクション
@@ -821,6 +895,9 @@
 			 * @ja
 			 * 0回または1回パターンをマッチします。  
 			 * このメソッドの後にパターンをマッチすることはできません。
+			 * ```
+			 * R.then("765").thenMaybe(R.then("pro"));
+			 * ```
 			 * @param {Object} pattern マッチさせるパターン
 			 * @param {Function} action 呼び出されるアクション
 			 * @return {Rena} このインスタンス
@@ -839,6 +916,11 @@
 			 * @ja
 			 * 'atLeast(0, pattern, action, init)'のショートカットです。  
 			 * このメソッドの後にパターンをマッチすることはできません。
+			 * ```
+			 * // "abc" -> "cba"
+			 * R().thenZeroOrMore(R.then(/[a-z]/, R.I),
+			 *      function(matched, inherited, synthesized) { return inherited + synthesized }, "");
+			 * ```
 			 * @param {Object} pattern マッチさせるパターン
 			 * @param {Function} action 呼び出されるアクション
 			 * @param {Object} init 属性の初期値
@@ -858,6 +940,11 @@
 			 * @ja
 			 * 'atLeast(1, pattern, action, init)'のショートカットです。  
 			 * このメソッドの後にパターンをマッチすることはできません。
+			 * ```
+			 * // "abc" -> "cba"
+			 * R().thenOneOrMore(R.then(/[a-z]/, R.I),
+			 *      function(matched, inherited, synthesized) { return inherited + synthesized }, "");
+			 * ```
 			 * @param {Object} pattern マッチさせるパターン
 			 * @param {Function} action 呼び出されるアクション
 			 * @param {Object} init 属性の初期値
@@ -878,6 +965,11 @@
 			 * @ja
 			 * 与えれれたデリミタで区切られたパターンにマッチします。
 			 * このメソッドの後にパターンをマッチすることはできません。
+			 * ```
+			 * // "7+6+5" -> "567"
+			 * R().thenDelimit(R.then(/[0-9]+/, R.I), "+",
+			 *    function(matched, inherited, synthesized) { return inherited + synthesized; }, "");
+			 * ```
 			 * @param {Object} pattern マッチさせるパターン
 			 * @param {Object} delimiter デリミタのパターン
 			 * @param {Function} action 呼び出されるアクション
@@ -1008,8 +1100,11 @@
 			 * @return {Rena} this instance
 			 * @ja
 			 * パターンを文字列を消費せずに先読みします。
+			 * ```
+			 * R.then("765").lookahead(R.then("pro"));
+			 * ```
 			 * @param {Object} pattern マッチさせるパターン
-			 * @param {Boolean} positive trueのとき先読みが一致したときマッチ、falsenのとき先読みが一致しないときマッチ
+			 * @param {Boolean} positive trueのとき先読みが一致したときマッチ、falseのとき先読みが一致しないときマッチ
 			 * @return {Rena} このインスタンス
 			 */
 			lookahead: function(pattern, positive) {
@@ -1038,6 +1133,10 @@
 			 * @return {Rena} this instance
 			 * @ja
 			 * 属性が与えられた条件を満たすときにパターンにマッチします。
+			 * ```
+			 * // match only "765"
+			 * R().thenInt(/[0-9]+/).cond(function(attribute) { return attribute === 765; });
+			 * ```
 			 * @param {Function} cond 条件
 			 * @return {Rena} このインスタンス
 			 */
@@ -1066,6 +1165,11 @@
 			 * @return {Rena} this instance
 			 * @ja
 			 * 属性を与えられた値にセットします。
+			 * ```
+			 * // "abc" -> "cbaz"
+			 * R().attr("z")
+			 *  .thenZeroOrMore(R.then(/[a-z]/, R.I), function(matched, inherited, synthesized) { return inherited + synthesized; });
+			 * ```
 			 * @param {Object} attr セットする属性
 			 * @return {Rena} このインスタンス
 			 */
@@ -1081,7 +1185,10 @@
 			 * @return {Rena} this instance
 			 * @ja
 			 * 与えられたアクションを実行し、戻り値を属性としてセットします。
-			 * @param {Object} action 実行するアクション
+			 * ```
+			 * R.thenInt("765").action(function(attribute) { return attribute + 346; });
+			 * ```
+			 * @param {Function} action 実行するアクション
 			 * @return {Rena} このインスタンス
 			 */
 			action: function(action) {
@@ -1127,6 +1234,10 @@
 			 * @param {Object} attribute an initial attribute
 			 * @ja
 			 * 与えられた位置からパースを開始します。
+			 * ```
+			 * // matched "765"
+			 * R.then("765").parseStart("961765", 3).match;
+			 * ```
 			 * @param {String} str パースする文字列
 			 * @param {Number} index マッチを開始する位置
 			 * @param {Object} attribute 初期の属性
@@ -1145,6 +1256,12 @@
 			 * @param {Object} attribute an initial attribute
 			 * @ja
 			 * 部分的にパースします。
+			 * ```
+			 * // result: "765"
+			 * R.then("765").parsePart("876765346").match;
+			 * // result: 3
+			 * R.then("765").parsePart("876765346").startIndex;
+			 * ```
 			 * @param {String} str パースする文字列
 			 * @param {Object} attribute 初期の属性
 			 */
@@ -1169,6 +1286,11 @@
 			 * @return {Object} accumlated attribute
 			 * @ja
 			 * 部分的に繰り返してパースします。
+			 * ```
+			 * // result: "765876346"
+			 * R.then(/[0-9]+/, R.I)
+			 *  .parsePartGlobal("765x876xx346xxx", "", function (accumlated, matchedAttribute) { return matchedAttribute + accumlated; });
+			 * ```
 			 * @param {String} str パースする文字列
 			 * @param {Object} init 初期の属性
 			 * @param {Function} action 属性を累積する関数
@@ -1196,6 +1318,10 @@
 			 * @return {Object} array of accumlated attribute
 			 * @ja
 			 * 部分的に繰り返してパースして配列に格納します。
+			 * ```
+			 * // result: ["765", "876", "346"]
+			 * R.then(/[0-9]+/, R.I).parsePartGlobalArray("765x876xx346xxx");
+			 * ```
 			 * @param {String} str パースする文字列
 			 * @return {Object} 累積された値
 			 */
@@ -1213,6 +1339,12 @@
 			 * @param {Object} attribute an initial attribute
 			 * @ja
 			 * 文字列全体をパースします。
+			 * ```
+			 * // matched
+			 * R.then("765").parse("765");
+			 * // no match
+			 * R.then("765").parse("765961");
+			 * ```
 			 * @param {String} str パースする文字列
 			 * @param {Object} attribute 初期の属性
 			 */
