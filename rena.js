@@ -1887,43 +1887,33 @@
 		 * 自分を再帰的に定義するときに使用します。
 		 */
 		Rena.Y = function(f) {
-			return (function(g) {
-				return g(g);
-			})(function(g) {
-				return f(function(str, index, captures) {
-					var testFunc = wrap(g(g));
-					return testFunc(str, index, captures);
-				});
-			});
+			return Rena.Yn(f); 
 		};
 		/**
 		 * a multiple fixed point combinator.  
-		 * <a href="http://okmij.org/ftp/Computation/fixed-point-combinators.html">http://okmij.org/ftp/Computation/fixed-point-combinators.html</a>
 		 * @ja
 		 * 関数の戻り値を引数に与える関数です。  
 		 * 自分を再帰的に定義するときに使用します。
 		 */
 		Rena.Yn = function() {
 			var l = Array.prototype.slice.call(arguments),
-				i,
-				res;
-			res = (function(g) {
-				return g(g);
-			})(function(p) {
-				var i,
-					li,
-					res = [];
-				for(i = 0; i < l.length; i++) {
-					(function (li) {
-						res.push(function(str, index, captures) {
-							return (wrap(li.apply(null, p(p))))(str, index, captures);
-						});
-					})(l[i]);
-				}
-				return res;
-			});
-			for(i = 0; i < res.length; i++) {
-				res[i] = new Rena().then(res[i]);
+				res = [],
+				delays = [],
+				memo = [],
+				i;
+
+			for(i = 0; i < l.length; i++) {
+				(function(i) {
+					delays.push(function(match, index, attr) {
+						if(!memo[i]) {
+							memo[i] = l[i].apply(null, delays);
+						}
+						return wrap(memo[i])(match, index, attr);
+					});
+				})(i);
+			}
+			for(i = 0; i < delays.length; i++) {
+				res.push(new Rena().then(delays[i]));
 			}
 			return res[0];
 		};
