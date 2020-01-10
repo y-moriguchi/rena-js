@@ -1906,9 +1906,9 @@
 				(function(i) {
 					delays.push(function(match, index, attr) {
 						if(!memo[i]) {
-							memo[i] = l[i].apply(null, delays);
+							memo[i] = wrap(l[i].apply(null, delays));
 						}
-						return wrap(memo[i])(match, index, attr);
+						return memo[i](match, index, attr);
 					});
 				})(i);
 			}
